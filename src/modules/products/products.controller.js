@@ -1,7 +1,7 @@
 import { HttpError } from "../../utils/httpError.js";
 import { getProductById, listProducts, parseProductId } from "./products.service.js";
 
-export async function listProductsController(req, res) {
+export const listProductsController = async (req, res) => {
   const result = await listProducts(req.query);
   res.json({
     success: true,
@@ -9,7 +9,7 @@ export async function listProductsController(req, res) {
   });
 }
 
-export async function getProductByIdController(req, res) {
+export const getProductByIdController = async (req, res) => {
   const productId = parseProductId(req.params.id);
   const languageId = Number.parseInt(req.query.language_id, 10) || 1;
   if (productId === 0) {

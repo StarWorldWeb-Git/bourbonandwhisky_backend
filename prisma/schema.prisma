@@ -244,6 +244,9 @@ model uvki_category_description {
   meta_title       String @db.VarChar(255)
   meta_description String @db.VarChar(255)
   meta_keyword     String @db.VarChar(255)
+ 
+  
+   
 
   @@id([category_id, language_id])
   @@index([name], map: "name")
@@ -1008,6 +1011,8 @@ model uvki_manufacturer {
   name            String  @db.VarChar(64)
   image           String? @db.VarChar(255)
   sort_order      Int
+
+  uvki_product uvki_product @relation(fields: [product_id], references: [product_id])
 }
 
 model uvki_manufacturer_description {
@@ -1311,9 +1316,10 @@ model uvki_product {
   date_added      DateTime @db.DateTime(0)
   date_modified   DateTime @db.DateTime(0)
 
-
+  
   uvki_product_description uvki_product_description[]
   uvki_product_image uvki_product_image[]
+  uvki_manufacturer  uvki_manufacturer []
   @@index([product_id], map: "product_id")
   @@index([image], map: "square_image")
   @@index([status], map: "square_status")
