@@ -1313,7 +1313,7 @@ model uvki_product {
 
 
   uvki_product_description uvki_product_description[]
-
+  uvki_product_image uvki_product_image[]
   @@index([product_id], map: "product_id")
   @@index([image], map: "square_image")
   @@index([status], map: "square_status")
@@ -1388,6 +1388,8 @@ model uvki_product_image {
   product_id       Int
   image            String? @db.VarChar(255)
   sort_order       Int     @default(0)
+
+  uvki_product uvki_product @relation(fields: [product_id], references: [product_id])
 
   @@index([product_id], map: "product_id")
 }
