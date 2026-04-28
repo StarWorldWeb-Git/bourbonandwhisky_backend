@@ -1012,7 +1012,7 @@ model uvki_manufacturer {
   image           String? @db.VarChar(255)
   sort_order      Int
 
-  uvki_product uvki_product @relation(fields: [product_id], references: [product_id])
+  uvki_product uvki_product[]
 }
 
 model uvki_manufacturer_description {
@@ -1318,8 +1318,10 @@ model uvki_product {
 
   
   uvki_product_description uvki_product_description[]
-  uvki_product_image uvki_product_image[]
-  uvki_manufacturer  uvki_manufacturer []
+  uvki_product_image       uvki_product_image[]
+  uvki_manufacturer        uvki_manufacturer        @relation(fields: [manufacturer_id], references: [manufacturer_id])
+  uvki_product_to_category uvki_product_to_category[]
+
   @@index([product_id], map: "product_id")
   @@index([image], map: "square_image")
   @@index([status], map: "square_status")
@@ -1463,6 +1465,8 @@ model uvki_product_special {
 model uvki_product_to_category {
   product_id  Int
   category_id Int
+
+  uvki_product uvki_product @relation(fields: [product_id], references: [product_id])
 
   @@id([product_id, category_id])
   @@index([category_id], map: "category_id")

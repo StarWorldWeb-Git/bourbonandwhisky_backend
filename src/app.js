@@ -9,7 +9,13 @@ import { notFoundMiddleware } from "./middlewares/notFound.middleware.js";
 export function createApp() {
   const app = express();
 
-  app.use(cors());
+
+
+  app.use(
+    cors({
+      origin: "http://localhost:3000",
+    })
+  );
   app.use(express.json());
 
   app.get("/health", (_req, res) => {
@@ -18,7 +24,7 @@ export function createApp() {
 
   app.use("/api/v1/products", productsRouter);
   app.use("/api/v1/categories", categoriesRouter);
-  app.use("/api/v1/manufacturer",manufacturerRouter)
+  app.use("/api/v1/manufacturer", manufacturerRouter)
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);
 

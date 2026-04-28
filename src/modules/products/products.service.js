@@ -29,23 +29,48 @@ const htmlToPlainText = (input = "") => {
     .trim();
 }
 
-export const  listProducts = async (query) => {
+export const listProducts = async (query) => {
   const page = parsePositiveInt(query.page, 1);
   const requestedLimit = parsePositiveInt(query.limit, DEFAULT_LIMIT);
   const limit = Math.min(requestedLimit, MAX_LIMIT);
   const skip = (page - 1) * limit;
   const searchText = (query.q ?? "").toString().trim();
   const languageId = parsePositiveInt(query.language_id, 1);
+  const categoryId = parsePositiveInt(query.category_id, 0);
+  const manufacturerId = parsePositiveInt(query.manufacturer_id, 0);
+  const min = parseFloat(query.min_price) || 0;
+  const max = parseFloat(query.max_price) || 0;
 
-  const where = searchText
-    ? {
-      OR: [
-        { model: { contains: searchText } },
-        { sku: { contains: searchText } },
-        { upc: { contains: searchText } },
-      ],
-    }
-    : {};
+  const pricefilter = {};
+  if (min > 0) pricefilter.gte = min;
+  if (max > 0) pricefilter.lte = max;
+  const hasPriceFilter = Object.keys(pricefilter).length > 0;
+  
+
+  const where = {
+    AND: [
+      searchText ? {
+        OR: [
+          { model: { contains: searchText } },
+          { sku: { contains: searchText } },
+          { upc: { contains: searchText } },
+          { uvki_product_description: { some: { name: { contains: searchText }, language_id: languageId } } }
+        ],
+      } : {},
+      categoryId > 0 ? {
+        uvki_product_to_category: {
+          some: {
+            category_id: categoryId
+          }
+        }
+      } : {},
+      manufacturerId > 0 ? {
+        manufacturer_id: manufacturerId
+      } : {},
+      hasPriceFilter ? { price : pricefilter } : {},
+    ]
+  };
+
   const [items, total] = await Promise.all([
     prisma.uvki_product.findMany({
       where,
@@ -102,30 +127,24 @@ export const getProductById = async (productId, languageId = 1) => {
       status: true,
       image: true,
       quantity: true,
-      manufacturer_id:true
+      uvki_product_description: {
+        where: { language_id: languageId },
+        take: 1,
+      },
+      uvki_product_image: {
+        select: { image: true },
+        orderBy: { sort_order: "asc" },
+      },
+      uvki_manufacturer: {
+        select: { image: true },
+      },
     },
   });
 
   if (!product) return null;
-  const [desc, productImages,manufacturer] = await Promise.all([
-   
-    prisma.uvki_product_description.findFirst({
-      where: {
-        product_id: productId,
-        language_id: languageId,
-      },
-    }),
-    prisma.uvki_product_image.findMany({
-      where: { product_id: productId },
-      select: { image: true },
-      orderBy: { sort_order: "asc" },
-    }),
-    prisma.uvki_manufacturer.findFirst({
-      where:{manufacturer_id : product?.manufacturer_id },
-      select:{ image:true}
-    })
-  ]);
-  
+
+  const desc = product.uvki_product_description[0];
+
   return {
     price: product.price,
     model: product.model,
@@ -133,7 +152,7 @@ export const getProductById = async (productId, languageId = 1) => {
     upc: product.upc,
     status: product.status,
     image: product.image,
-    images: productImages?.map((img) => img.image) ?? [],
+    images: product.uvki_product_image.map((img) => img.image),
     quantity: product.quantity,
     name: desc?.name ?? null,
     description: desc ? htmlToPlainText(desc.description) : null,
@@ -141,6 +160,6 @@ export const getProductById = async (productId, languageId = 1) => {
     meta_description: desc?.meta_description ?? null,
     meta_keyword: desc?.meta_keyword ?? null,
     tag: desc?.tag ?? null,
-    brandImg: manufacturer?.image ?? null,
+    brandImg: product.uvki_manufacturer?.image ?? null,
   };
-}
+};
