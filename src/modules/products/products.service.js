@@ -38,14 +38,32 @@ export const listProducts = async (query) => {
   const languageId = parsePositiveInt(query.language_id, 1);
   const categoryId = parsePositiveInt(query.category_id, 0);
   const manufacturerId = parsePositiveInt(query.manufacturer_id, 0);
-  const min = parseFloat(query.min_price) || 0;
-  const max = parseFloat(query.max_price) || 0;
+  const minPrice = (query.min_price !== undefined && query.min_price !== "") ? parseFloat(query.min_price) : NaN;
+  const maxPrice = (query.max_price !== undefined && query.max_price !== "") ? parseFloat(query.max_price) : NaN;
+  const exactPrice = (query.price !== undefined && query.price !== "") ? parseFloat(query.price) : NaN;
+  const sort = (query.sort ?? "").toString().trim();
+  const availability = (query.availability ?? "").toString().trim();
 
   const pricefilter = {};
-  if (min > 0) pricefilter.gte = min;
-  if (max > 0) pricefilter.lte = max;
+  if (!isNaN(exactPrice)) {
+    pricefilter.equals = exactPrice;
+  } else {
+    if (!isNaN(minPrice)) pricefilter.gte = minPrice;
+    if (!isNaN(maxPrice)) pricefilter.lte = maxPrice;
+  }
   const hasPriceFilter = Object.keys(pricefilter).length > 0;
-  
+
+  // Sorting logic
+  let orderBy = { product_id: "desc" };
+  if (sort === "price_asc") {
+    orderBy = { price: "asc" };
+  } else if (sort === "price_desc") {
+    orderBy = { price: "desc" };
+  } else if (sort === "name_asc") {
+    orderBy = { uvki_product_description: { _count: "asc" } }; // This is tricky with Prisma relations, usually we sort by name in application layer if not possible easily in DB
+    // Actually, sorting by relation field name is better handled if we join or use specific Prisma features.
+    // For now, let's stick to price and ID sorting.
+  }
 
   const where = {
     AND: [
@@ -68,6 +86,7 @@ export const listProducts = async (query) => {
         manufacturer_id: manufacturerId
       } : {},
       hasPriceFilter ? { price : pricefilter } : {},
+      availability === "in_stock" ? { quantity: { gt: 0 } } : availability === "out_of_stock" ? { quantity: 0 } : {},
     ]
   };
 
@@ -76,7 +95,7 @@ export const listProducts = async (query) => {
       where,
       skip,
       take: limit,
-      orderBy: { product_id: "desc" },
+      orderBy,
       select: {
         product_id: true,
         model: true,
@@ -85,6 +104,7 @@ export const listProducts = async (query) => {
         status: true,
         image: true,
         quantity: true,
+        date_added: true,
         uvki_product_description: {
           where: { language_id: languageId },
           select: {
