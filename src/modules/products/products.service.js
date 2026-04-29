@@ -179,15 +179,39 @@ export const getProductById = async (productId, languageId = 1) => {
       uvki_manufacturer: {
         select: { image: true },
       },
+      uvki_product_special: {
+        where: { customer_group_id: 1 },
+        orderBy: { priority: "asc" },
+        select: {
+          price: true,
+          date_start: true,
+          date_end: true,
+        }
+      }
     },
   });
 
   if (!product) return null;
 
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const isValidSpecial = (special) => {
+    const start = new Date(special.date_start);
+    const end = new Date(special.date_end);
+    const startOk = isNaN(start.getTime()) || start <= today;
+    const endOk = isNaN(end.getTime()) || end >= today;
+    return startOk && endOk;
+  };
+
+  const validSpecial = product.uvki_product_special.find(isValidSpecial);
+
   const desc = product.uvki_product_description[0];
 
   return {
-    price: product.price,
+    original_price: product.price,
+    special_price: validSpecial?.price ?? null,
     model: product.model,
     sku: product.sku,
     upc: product.upc,
@@ -226,15 +250,42 @@ export const mostviewdproductservice = async () => {
           name: true,
         },
       },
+      uvki_product_special: {
+        where: {
+          customer_group_id: 1,
+        },
+        orderBy: { priority: "asc" },
+        select: {
+          price: true,
+          date_start: true,
+          date_end: true,
+        }
+      }
     },
   });
+  const isValidSpecial = (special) => {
+    const start = new Date(special.date_start);
+    const end = new Date(special.date_end);
 
-  const flatItems = result.map(({ uvki_product_description, ...product }) => ({
-    ...product,
-    name: uvki_product_description[0]?.name ?? null,
-  }));
 
-  console.log("result", flatItems);
+    const startOk = isNaN(start.getTime()) || start <= today;
+    const endOk = isNaN(end.getTime()) || end >= today;
+
+    return startOk && endOk;
+  };
+
+  const flatItems = result.map(({ uvki_product_description, uvki_product_special, ...product }) => {
+    const validSpecial = uvki_product_special.find(isValidSpecial);
+
+    return {
+      ...product,
+      name: uvki_product_description[0]?.name ?? null,
+      original_price: product.price,
+      special_price: validSpecial?.price ?? null,
+    };
+  });
+
+
   return flatItems;
 }
 
