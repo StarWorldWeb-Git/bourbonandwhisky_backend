@@ -178,7 +178,7 @@ export const mostviewdproductservice = async () => {
   const result = await prisma.uvki_product.findMany({
     where: { status: true },
     orderBy: { viewed: "desc" },
-    take: 5,
+    take: 4,
     select: {
       product_id: true,
       model: true,
