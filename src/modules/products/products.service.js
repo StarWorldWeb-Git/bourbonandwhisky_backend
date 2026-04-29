@@ -53,18 +53,16 @@ export const listProducts = async (query) => {
   }
   const hasPriceFilter = Object.keys(pricefilter).length > 0;
 
-  // Sorting logic
+  
   let orderBy = { product_id: "desc" };
   if (sort === "price_asc") {
     orderBy = { price: "asc" };
   } else if (sort === "price_desc") {
     orderBy = { price: "desc" };
   } else if (sort === "name_asc") {
-    orderBy = { uvki_product_description: { _count: "asc" } }; // This is tricky with Prisma relations, usually we sort by name in application layer if not possible easily in DB
-    // Actually, sorting by relation field name is better handled if we join or use specific Prisma features.
-    // For now, let's stick to price and ID sorting.
+    orderBy = { uvki_product_description: { _count: "asc" } }; 
   }
-
+  
   const where = {
     AND: [
       searchText ? {

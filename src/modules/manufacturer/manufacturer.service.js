@@ -23,6 +23,7 @@ export const lisdtingManufacturersService = async (query) => {
             select: {
                 name: true,
                 manufacturer_id: true,
+                image:true
             }
         }),
         prisma.uvki_category_description.count(),
@@ -37,3 +38,37 @@ export const lisdtingManufacturersService = async (query) => {
     }
 
 }
+
+
+export const listingAllManufacturersService = async (query) => {
+    const page = parsePositiveInt(query.page, 1);
+    const requestedLimit = parsePositiveInt(query.limit, DEFAULT_LIMIT);
+    const limit = Math.min(requestedLimit, MAX_LIMIT);
+    const offset = (page - 1) * limit;
+
+    const [items, total] = await prisma.$transaction([
+        prisma.uvki_manufacturer.findMany({
+            skip: offset,
+            take: limit,
+            orderBy: {
+                name: "asc"
+            },
+            select: {
+                name: true,
+                manufacturer_id: true,
+                image: true
+            }
+        }),
+        prisma.uvki_manufacturer.count()
+    ])
+
+    return {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        items
+    }
+}   
+   
+  
