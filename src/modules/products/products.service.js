@@ -16,8 +16,6 @@ const decodeHtml = (input = "") => {
     .replace(/&nbsp;/g, " ");
 }
 
-
-
 export const listProducts = async (query) => {
   const page = parsePositiveInt(query.page, 1);
   const requestedLimit = parsePositiveInt(query.limit, DEFAULT_LIMIT);

@@ -38,3 +38,21 @@ export const listingCategoriesServices = async (query) => {
   };;
 
 }
+
+export const showLimitCategoriesServices = async (query) => {
+     const result = await prisma.uvki_category_description.findMany({
+        where: { language_id: 1 },
+        take: 14,
+        orderBy: {
+            category_id: "asc",
+        },
+        select:{
+            name : true,
+            category_id : true, 
+            language_id: true,
+        }
+     });
+
+     console.log(result);
+  return result;
+}
