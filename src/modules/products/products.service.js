@@ -172,3 +172,36 @@ export const getProductById = async (productId, languageId = 1) => {
     brandImg: product.uvki_manufacturer?.image ?? null,
   };
 };
+
+export const mostviewdproductservice = async () => {
+
+  const result = await prisma.uvki_product.findMany({
+    where: { status: true },
+    orderBy: { viewed: "desc" },
+    take: 5,
+    select: {
+      product_id: true,
+      model: true,
+      sku: true,
+      price: true,
+      status: true,
+      image: true,
+      quantity: true,
+      viewed: true,
+      uvki_product_description: {
+        where: { language_id: 1 },
+        select: {
+          name: true,
+        },
+      },
+    },
+  });
+
+  const flatItems = result.map(({ uvki_product_description, ...product }) => ({
+    ...product,
+    name: uvki_product_description[0]?.name ?? null,
+  }));
+
+  console.log("result", flatItems);
+  return flatItems;
+}

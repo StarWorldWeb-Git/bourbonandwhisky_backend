@@ -1,5 +1,5 @@
 import { HttpError } from "../../utils/httpError.js";
-import { getProductById, listProducts, parseProductId } from "./products.service.js";
+import { getProductById, listProducts, mostviewdproductservice, parseProductId } from "./products.service.js";
 
 export const listProductsController = async (req, res) => {
   const result = await listProducts(req.query);
@@ -21,8 +21,19 @@ export const getProductByIdController = async (req, res) => {
     throw new HttpError(404, "Product not found");
   }
 
+
+
   res.json({
     success: true,
     item: product,
   });
 }
+
+  export const MostViewedProductsController =  async (req, res) => {
+    console.log("MostViewedProductsController");
+   const result = await mostviewdproductservice();
+   res.json({
+    success: true,
+    items: result,    
+   });
+  }
