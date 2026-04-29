@@ -1,3 +1,4 @@
+import { prisma } from "../../../lib/prisma.js";
 import { HttpError } from "../../utils/httpError.js";
 import { countProductViewedService, getProductById, listProducts, mostviewdproductservice, parseProductId } from "./products.service.js";
 

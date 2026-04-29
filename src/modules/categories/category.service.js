@@ -40,19 +40,29 @@ export const listingCategoriesServices = async (query) => {
 }
 
 export const showLimitCategoriesServices = async (query) => {
-     const result = await prisma.uvki_category_description.findMany({
-        where: { language_id: 1 },
-        take: 14,
-        orderBy: {
-            category_id: "asc",
-        },
-        select:{
-            name : true,
-            category_id : true, 
-            language_id: true,
-        }
-     });
+  
+  const distinctCategories = await prisma.uvki_product_to_category.findMany({
+    distinct: ["category_id"],
+    select: { category_id: true },
+    orderBy: { category_id: "asc" },
+    take: 15,
+  });
 
-     console.log(result);
+  const categoryIds = distinctCategories.map((c) => c.category_id);
+  const result = await prisma.uvki_category_description.findMany({
+    where: {
+      category_id: { in: categoryIds },
+      language_id: 1,
+    },
+    orderBy: {
+      category_id: "asc",
+    },
+    select: {
+      name: true,
+      category_id: true,
+      language_id: true,
+    },
+  });
+
   return result;
-}
+};
