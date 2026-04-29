@@ -1,5 +1,5 @@
 import { HttpError } from "../../utils/httpError.js";
-import { getProductById, listProducts, mostviewdproductservice, parseProductId } from "./products.service.js";
+import { countProductViewedService, getProductById, listProducts, mostviewdproductservice, parseProductId } from "./products.service.js";
 
 export const listProductsController = async (req, res) => {
   const result = await listProducts(req.query);
@@ -32,6 +32,15 @@ export const getProductByIdController = async (req, res) => {
   export const MostViewedProductsController =  async (req, res) => {
     console.log("MostViewedProductsController");
    const result = await mostviewdproductservice();
+   res.json({
+    success: true,
+    items: result,    
+   });
+  }
+
+
+  export const CountProductViewedController = async  (req, res) => {
+   const result = await countProductViewedService(req.params);
    res.json({
     success: true,
     items: result,    

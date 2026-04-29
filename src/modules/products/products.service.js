@@ -42,7 +42,7 @@ export const listProducts = async (query) => {
   }
   const hasPriceFilter = Object.keys(pricefilter).length > 0;
 
-  
+
   let orderBy = { product_id: "desc" };
   if (sort === "price_asc") {
     orderBy = { price: "asc" };
@@ -53,7 +53,7 @@ export const listProducts = async (query) => {
   } else if (sort === "name_desc") {
     orderBy = { model: "desc" };
   }
-  
+
   const where = {
     AND: [
       searchText ? {
@@ -74,8 +74,9 @@ export const listProducts = async (query) => {
       manufacturerId > 0 ? {
         manufacturer_id: manufacturerId
       } : {},
-      hasPriceFilter ? { price : pricefilter } : {},
+      hasPriceFilter ? { price: pricefilter } : {},
       availability === "in_stock" ? { quantity: { gt: 0 } } : availability === "out_of_stock" ? { quantity: 0 } : {},
+
     ]
   };
 
@@ -99,17 +100,48 @@ export const listProducts = async (query) => {
           select: {
             name: true,
           },
+
         },
+        uvki_product_special: {
+          where: {
+            customer_group_id: 1,
+          },
+          orderBy: { priority: "asc" },
+          select: {
+            price: true,
+            date_start: true,
+            date_end: true,
+          }
+        }
       },
     }),
     prisma.uvki_product.count({ where }),
   ]);
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  const flatItems = items.map(({ uvki_product_description, ...product }) => ({
-    ...product,
-    name: uvki_product_description[0]?.name ?? null,
-  }));
+  const isValidSpecial = (special) => {
+    const start = new Date(special.date_start);
+    const end = new Date(special.date_end);
+
+
+    const startOk = isNaN(start.getTime()) || start <= today;
+    const endOk = isNaN(end.getTime()) || end >= today;
+
+    return startOk && endOk;
+  };
+
+  const flatItems = items.map(({ uvki_product_description, uvki_product_special, ...product }) => {
+    const validSpecial = uvki_product_special.find(isValidSpecial);
+
+    return {
+      ...product,
+      name: uvki_product_description[0]?.name ?? null,
+      original_price: product.price,
+      special_price: validSpecial?.price ?? null,
+    };
+  });
 
   return {
     page,
@@ -204,4 +236,15 @@ export const mostviewdproductservice = async () => {
 
   console.log("result", flatItems);
   return flatItems;
+}
+
+export const countProductViewedService = async (params) => {
+
+  const productsID = params.id;
+  const result = await prisma.uvki_product.updateMany({
+    where: { product_id: parseProductId(productsID) },
+    data: { viewed: { increment: 1 } },
+  });
+
+  return result;
 }

@@ -1316,12 +1316,12 @@ model uvki_product {
   date_added      DateTime @db.DateTime(0)
   date_modified   DateTime @db.DateTime(0)
 
-  
+ 
   uvki_product_description uvki_product_description[]
   uvki_product_image       uvki_product_image[]
   uvki_manufacturer        uvki_manufacturer        @relation(fields: [manufacturer_id], references: [manufacturer_id])
   uvki_product_to_category uvki_product_to_category[]
-
+  uvki_product_special     uvki_product_special []
   @@index([product_id], map: "product_id")
   @@index([image], map: "square_image")
   @@index([status], map: "square_status")
@@ -1458,6 +1458,8 @@ model uvki_product_special {
   price              Decimal  @default(0.0000) @db.Decimal(15, 4)
   date_start         DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
   date_end           DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+
+  uvki_product uvki_product @relation(fields: [product_id], references: [product_id])
 
   @@index([product_id], map: "product_id")
 }
