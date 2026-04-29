@@ -49,7 +49,9 @@ export const listProducts = async (query) => {
   } else if (sort === "price_desc") {
     orderBy = { price: "desc" };
   } else if (sort === "name_asc") {
-    orderBy = { uvki_product_description: { _count: "asc" } }; 
+    orderBy = { model: "asc" };
+  } else if (sort === "name_desc") {
+    orderBy = { model: "desc" };
   }
   
   const where = {
