@@ -1,7 +1,7 @@
 
 import express, { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { login, register, profile, changePassword, forgotPassword, resetPassword } from './customer.controller.js';
+import { login, register, profile, changePassword, forgotPassword, resetPassword, editAccountInformation } from './customer.controller.js';
 import { loginRules, registerRules, validate } from './customer.validation.js';
 import { authMiddleware } from '../../middlewares/authMiddleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -34,6 +34,7 @@ customerRouter.post('/register', registerLimiter, registerRules, validate, async
 customerRouter.post('/change-password', authMiddleware, asyncHandler(changePassword));
 customerRouter.post('/forgot-password', asyncHandler(forgotPassword));
 customerRouter.post('/reset-password', asyncHandler(resetPassword));
+customerRouter.put('/edit-information', asyncHandler(editAccountInformation))
 
 // Protected Route (token required)
 customerRouter.get('/profile', authMiddleware, asyncHandler(profile));

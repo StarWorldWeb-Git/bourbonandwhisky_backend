@@ -188,8 +188,6 @@ export const changePasswordService = async (customer_id, { old_password, new_pas
 
 
 export const forgotPasswordRequestService = async (email) => {
-
-
     const customer = await prisma.uvki_customer.findFirst({
         where: { email: email.toLowerCase().trim() },
         select: {
@@ -200,59 +198,165 @@ export const forgotPasswordRequestService = async (email) => {
         }
     });
 
-    // 2. Customer nahi mila → error
     if (!customer) throw new Error('No account found with this email');
-
-    // 3. Account disabled hai?
     if (!customer.status) throw new Error('Your account is disabled. Contact support.');
 
-    // 4. Unique reset code generate karo (32 char hex)
     const resetCode = crypto.randomBytes(16).toString('hex');
-    // Example: "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
 
-    // 5. DB ke "code" column mein save karo
-    // OpenCart bhi yahi "code" column use karta hai - compatible rahega
     await prisma.uvki_customer.update({
         where: { customer_id: customer.customer_id },
         data: { code: resetCode }
     });
 
-    // 6. Reset link banao
     const resetLink = `${process.env.FRONTEND_URL}/reset-password?code=${resetCode}`;
 
-    // 7. Email bhejo
     await transporter.sendMail({
         from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM}>`,
         to: customer.email,
         subject: 'Reset Your Password - Bourbon and Whisky',
         html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #8B6914;">Password Reset Request</h2>
-                <p>Hi ${customer.firstname},</p>
-                <p>We received a request to reset your password.</p>
-                <p>Click the button below to reset your password:</p>
-                <a href="${resetLink}" 
-                   style="background:#8B6914; color:white; padding:12px 24px; 
-                          text-decoration:none; border-radius:4px; display:inline-block;">
-                   Reset Password
-                </a>
-                <p style="margin-top:20px; color:#666;">
-                    If you didn't request this, please ignore this email.
+            <!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f4; font-family: Arial, sans-serif;">
+
+  <!-- Wrapper -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f4; padding: 40px 0;">
+    <tr>
+      <td align="center">
+
+        <!-- Card -->
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #8B6914 0%, #C9A84C 50%, #8B6914 100%); padding: 40px 20px; text-align:center;">
+              <h1 style="margin:0; color:#ffffff; font-size:28px; letter-spacing:2px; text-transform:uppercase;">
+                🥃 Bourbon & Whisky 🥃
+              </h1>
+              <p style="margin:8px 0 0; color:rgba(255,255,255,0.85); font-size:14px; letter-spacing:1px;">
+                Premium Spirits Collection
+              </p>
+            </td>
+          </tr>
+
+          <!-- Lock Icon Banner -->
+          <tr>
+            <td style="background:#fdf8ee; padding: 30px 20px 10px; text-align:center;">
+              <div style="width:70px; height:70px; background: linear-gradient(135deg, #8B6914, #C9A84C); border-radius:50%; margin:0 auto; display:flex; align-items:center; justify-content:center; font-size:32px; line-height:70px;">
+                🔐
+              </div>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="background:#fdf8ee; padding: 20px 50px 40px;">
+
+              <h2 style="color:#2d2d2d; font-size:24px; text-align:center; margin:0 0 10px;">
+                Password Reset Request
+              </h2>
+              <p style="color:#888; font-size:14px; text-align:center; margin:0 0 30px;">
+                We received a request to reset your password
+              </p>
+
+              <!-- Divider -->
+              <div style="height:1px; background: linear-gradient(to right, transparent, #C9A84C, transparent); margin-bottom:30px;"></div>
+
+              <p style="color:#444; font-size:16px; margin:0 0 10px;">
+                Hi <strong style="color:#8B6914;">${customer.firstname}</strong> 👋
+              </p>
+              <p style="color:#666; font-size:15px; line-height:1.7; margin:0 0 30px;">
+                Someone requested a password reset for your <strong>Bourbon & Whisky</strong> account. 
+                Click the button below to set a new password. This link is valid for <strong>1 hour only.</strong>
+              </p>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 10px 0 30px;">
+                    <a href="${resetLink}"
+                       style="display:inline-block;
+                              background: linear-gradient(135deg, #8B6914 0%, #C9A84C 100%);
+                              color:#ffffff;
+                              text-decoration:none;
+                              padding: 16px 48px;
+                              border-radius:50px;
+                              font-size:16px;
+                              font-weight:bold;
+                              letter-spacing:1px;
+                              box-shadow: 0 4px 15px rgba(139,105,20,0.4);">
+                      🔑 Reset My Password
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Warning Box -->
+              <div style="background:#fff8e6; border-left:4px solid #C9A84C; border-radius:4px; padding:16px 20px; margin-bottom:20px;">
+                <p style="margin:0; color:#8B6914; font-size:14px;">
+                  ⚠️ <strong>Didn't request this?</strong> You can safely ignore this email. 
+                  Your password will remain unchanged.
                 </p>
-                <p style="color:#666;">This link will expire in 1 hour.</p>
-            </div>
+              </div>
+
+              <!-- Link Copy Box -->
+              <p style="color:#999; font-size:13px; margin:0 0 8px;">
+                If the button doesn't work, copy this link:
+              </p>
+              <div style="background:#f0f0f0; border-radius:6px; padding:12px 16px; word-break:break-all;">
+                <a href="${resetLink}" style="color:#8B6914; font-size:12px; text-decoration:none;">
+                  ${resetLink}
+                </a>
+              </div>
+
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding: 0 50px;">
+              <div style="height:1px; background:#eeeeee;"></div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:30px 50px; text-align:center;">
+              <p style="color:#aaa; font-size:13px; margin:0 0 8px;">
+                © 2025 Bourbon & Whisky. All rights reserved.
+              </p>
+              <p style="color:#aaa; font-size:12px; margin:0;">
+                This is an automated email, please do not reply.
+              </p>
+              <div style="margin-top:16px;">
+                <a href="https://bourbonandwhisky.com" style="color:#C9A84C; font-size:13px; text-decoration:none;">
+                  🌐 Visit our website
+                </a>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+        <!-- End Card -->
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
         `
     });
 
     return { message: 'Password reset link sent to your email' };
 };
 
-
-// ─── STEP 2: Reset Password ───
-// User link click karta hai → code + new password bhejta hai
 export const resetPasswordService = async (code, new_password) => {
 
-    // 1. Code se customer dhundo
     const customer = await prisma.uvki_customer.findFirst({
         where: { code: code },
         select: {
@@ -261,26 +365,45 @@ export const resetPasswordService = async (code, new_password) => {
         }
     });
 
-    // 2. Code invalid ya already use ho chuka?
     if (!customer || !customer.code) {
         throw new Error('Invalid or expired reset link');
     }
-
-    // 3. Naya salt aur password banao
-    // Same hashPassword function use kar rahe hain jo login mein use hota hai
-    // Isliye old aur new dono customers ka password sahi format mein rahega
     const newSalt = generateSalt();
     const newHashedPassword = hashPassword(new_password, newSalt);
 
-    // 4. Password update karo aur code clear karo
     await prisma.uvki_customer.update({
         where: { customer_id: customer.customer_id },
         data: {
             password: newHashedPassword,
             salt: newSalt,
-            code: '' // ← code clear karo taaki dobara use na ho sake
+            code: ''
         }
     });
 
     return { message: 'Password reset successfully. Please login.' };
 };
+
+export const accountInformationService = async (data) => {
+
+    const { customer_id, firstname, lastname, email, telephone } = data;
+
+    const emailExist = await prisma.uvki_customer.findFirst({
+        where: { email: email.toLowerCase().trim(),
+            NOT: {customer_id:customer_id}
+         },
+        
+    })
+    if (emailExist) {
+        throw new Error("Already email exist in another account")
+    }
+    const update = await prisma.uvki_customer.update({
+        where: { customer_id: Number(customer_id) },
+        data: {
+            firstname: firstname.trim(),
+            lastname: lastname.trim(),
+            email: email.trim(),
+            telephone: telephone.trim() 
+        }
+    })
+    return update;
+}

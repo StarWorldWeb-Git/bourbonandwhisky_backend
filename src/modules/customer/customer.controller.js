@@ -1,6 +1,6 @@
 import { successResponse, errorResponse } from '../../utils/apiResponse.js';
 import { verifyCaptcha } from '../../utils/verifyCaptcha.js';
-import { changePasswordService, forgotPasswordRequestService, getProfile, loginCustomer, registerCustomer, resetPasswordService } from './customer.service.js';
+import { accountInformationService, changePasswordService, forgotPasswordRequestService, getProfile, loginCustomer, registerCustomer, resetPasswordService } from './customer.service.js';
 
 export const login = async (req, res) => {
 
@@ -38,7 +38,6 @@ export const changePassword = async (req, res) => {
 export const forgotPassword = async (req, res) => {
 
     const { email } = req.body;
-    console.log('Forgot password request for email:', email);
     if (!email) return errorResponse(res, 400, 'Email is required');
     const data = await forgotPasswordRequestService(email);
     return successResponse(res, 200, 'Reset link sent', data);
@@ -61,5 +60,10 @@ export const resetPassword = async (req, res) => {
 
 
 };
+
+export const editAccountInformation  =  async(req,res)=>{
+    const result  = await  accountInformationService(req.body) ;
+    return result ;
+}
 
 
