@@ -16,7 +16,7 @@ export const login = async (req, res) => {
 export const register = async (req, res) => {
 
     const { captchaToken, ...rest } = req.body;
-    // await verifyCaptcha(captchaToken);
+    await verifyCaptcha(captchaToken);
     const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '0.0.0.0';;
     const result = await registerCustomer(rest, ip);
     return successResponse(res, 201, 'Registration successful', result);
