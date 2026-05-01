@@ -1,14 +1,15 @@
 
 import express, { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { login, register, profile } from './customer.controller.js';
+import { login, register, profile, changePassword, forgotPassword, resetPassword } from './customer.controller.js';
 import { loginRules, registerRules, validate } from './customer.validation.js';
 import { authMiddleware } from '../../middlewares/authMiddleware.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 
 
 const customerRouter = Router();
 
-// Rate Limiter - Brute force se bachao
+
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, 
     max: 5,                    
@@ -28,10 +29,12 @@ const registerLimiter = rateLimit({
 });
 
 // Public Routes
-customerRouter.post('/login',    loginLimiter,    loginRules,    validate, login);
-customerRouter.post('/register', registerLimiter, registerRules, validate, register);
+customerRouter.post('/login',    loginLimiter,    loginRules,    validate, asyncHandler(login));
+customerRouter.post('/register', registerLimiter, registerRules, validate, asyncHandler(register));
+customerRouter.post('/change-password', authMiddleware, asyncHandler(changePassword));
+customerRouter.post('/forgot-password', asyncHandler(forgotPassword));
+customerRouter.post('/reset-password', asyncHandler(resetPassword));
 
 // Protected Route (token required)
-customerRouter.get('/profile', authMiddleware, profile);
-
+customerRouter.get('/profile', authMiddleware, asyncHandler(profile));
  export default customerRouter;

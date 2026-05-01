@@ -8,7 +8,7 @@ import manufacturerRouter from "./modules/manufacturer/manufacturer.routes.js";
 import customerRouter from "./modules/customer/customer.routes.js";
 import helmet from "helmet";
 export const createApp = () => {
-  
+
   const app = express();
 
   app.use(
@@ -19,10 +19,9 @@ export const createApp = () => {
 
 
   app.use(express.json());
-  
-
-
+  app.set('trust proxy', true);
   app.use(helmet());
+  
   app.get("/health", (_req, res) => {
     res.json({ success: true, message: "API is healthy" });
   });

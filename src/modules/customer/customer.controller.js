@@ -1,35 +1,65 @@
 import { successResponse, errorResponse } from '../../utils/apiResponse.js';
-import { getProfile, loginCustomer, registerCustomer } from './customer.service.js';
+import { verifyCaptcha } from '../../utils/verifyCaptcha.js';
+import { changePasswordService, forgotPasswordRequestService, getProfile, loginCustomer, registerCustomer, resetPasswordService } from './customer.service.js';
 
 export const login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const ip = req.ip || req.headers['x-forwarded-for'];
-        const result = await loginCustomer(email, password, ip);
-        return successResponse(res, 200, 'Login successful', result);
-    } catch (error) {
-        return errorResponse(res, 401, error.message);
-    }
+
+    const { captchaToken,...rest  } = req.body;
+     
+    await verifyCaptcha(captchaToken);
+    const ip = req.ip || req.headers['x-forwarded-for'];
+    const result = await loginCustomer(rest,ip);
+    return successResponse(res, 200, 'Login successful', result);
+
 }
 
 export const register = async (req, res) => {
-    try {
-        const ip = req.ip || req.headers['x-forwarded-for'];
-        console.log('Client IP:', ip);``
-        const result = await registerCustomer(req.body, ip);
-        return successResponse(res, 201, 'Registration successful', result);
-    } catch (error) {
-        return errorResponse(res, 400, error.message);
-    }
+
+    const { captchaToken, ...rest } = req.body;
+    // await verifyCaptcha(captchaToken);
+    const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '0.0.0.0';;
+    const result = await registerCustomer(rest, ip);
+    return successResponse(res, 201, 'Registration successful', result);
 }
 
 export const profile = async (req, res) => {
-    try {
-        // req.customer authMiddleware se aata hai
-        const data = await getProfile(req.customer.customer_id);
-        return successResponse(res, 200, 'Profile fetched', data);
-    } catch (error) {
-        return errorResponse(res, 404, error.message);
-    }
+
+    const data = await getProfile(req.customer.customer_id);
+    return successResponse(res, 200, 'Profile fetched', data);
+
 }
+
+export const changePassword = async (req, res) => {
+    const result = await changePasswordService(req.customer.customer_id, req.body);
+    res.json(result);;
+}
+
+
+export const forgotPassword = async (req, res) => {
+
+    const { email } = req.body;
+    console.log('Forgot password request for email:', email);
+    if (!email) return errorResponse(res, 400, 'Email is required');
+    const data = await forgotPasswordRequestService(email);
+    return successResponse(res, 200, 'Reset link sent', data);
+
+};
+
+
+export const resetPassword = async (req, res) => {
+
+    const { code, new_password } = req.body;
+
+    if (!code) return errorResponse(res, 400, 'Reset code is required');
+    if (!new_password) return errorResponse(res, 400, 'New password is required');
+    if (new_password.length < 6) {
+        return errorResponse(res, 400, 'Password must be at least 6 characters');
+    }
+
+    const data = await resetPasswordService(code, new_password);
+    return successResponse(res, 200, 'Password reset successfully', data);
+
+
+};
+
 
