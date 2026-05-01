@@ -11,8 +11,8 @@ const customerRouter = Router();
 
 
 const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, 
-    max: 5,                    
+    windowMs: 15 * 60 * 1000,
+    max: 5,
     message: {
         success: false,
         message: 'Too many login attempts. Try again after 15 minutes.'
@@ -20,8 +20,8 @@ const loginLimiter = rateLimit({
 });
 
 const registerLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, 
-    max: 3,                    
+    windowMs: 60 * 60 * 1000,
+    max: 3,
     message: {
         success: false,
         message: 'Too many registrations. Try again after 1 hour.'
@@ -29,13 +29,13 @@ const registerLimiter = rateLimit({
 });
 
 // Public Routes
-customerRouter.post('/login',    loginLimiter,    loginRules,    validate, asyncHandler(login));
+customerRouter.post('/login', loginLimiter, loginRules, validate, asyncHandler(login));
 customerRouter.post('/register', registerLimiter, registerRules, validate, asyncHandler(register));
-customerRouter.post('/change-password', authMiddleware, asyncHandler(changePassword));
 customerRouter.post('/forgot-password', asyncHandler(forgotPassword));
 customerRouter.post('/reset-password', asyncHandler(resetPassword));
-customerRouter.put('/edit-information', asyncHandler(editAccountInformation))
 
 // Protected Route (token required)
 customerRouter.get('/profile', authMiddleware, asyncHandler(profile));
- export default customerRouter;
+customerRouter.post('/change-password', authMiddleware, asyncHandler(changePassword));
+customerRouter.put('/edit-information', authMiddleware, asyncHandler(editAccountInformation));
+export default customerRouter;
