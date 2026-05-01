@@ -31,7 +31,7 @@ export const getProductByIdController = async (req, res) => {
 }
 
   export const MostViewedProductsController =  async (req, res) => {
-    console.log("MostViewedProductsController");
+    
    const result = await mostviewdproductservice();
    res.json({
     success: true,

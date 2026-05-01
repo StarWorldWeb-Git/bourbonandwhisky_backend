@@ -7,5 +7,5 @@ import { listingCategoriesController, showLimitCategoriesController } from "./ca
 const categoriesRouter = Router();
 
 categoriesRouter.get("/", asyncHandler(listingCategoriesController));
-categoriesRouter.get("/limit", asyncHandler(showLimitCategoriesController));
+categoriesRouter.get("/top", asyncHandler(showLimitCategoriesController));
 export default categoriesRouter;
