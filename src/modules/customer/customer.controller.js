@@ -4,11 +4,11 @@ import { accountInformationService, changePasswordService, forgotPasswordRequest
 
 export const login = async (req, res) => {
 
-    const { captchaToken,...rest  } = req.body;
-     
+    const { captchaToken, ...rest } = req.body;
+
     await verifyCaptcha(captchaToken);
     const ip = req.ip || req.headers['x-forwarded-for'];
-    const result = await loginCustomer(rest,ip);
+    const result = await loginCustomer(rest, ip);
     return successResponse(res, 200, 'Login successful', result);
 
 }
@@ -61,9 +61,9 @@ export const resetPassword = async (req, res) => {
 
 };
 
-export const editAccountInformation  =  async(req,res)=>{
-    const result  = await  accountInformationService(req.body) ;
-    return result ;
+export const editAccountInformation = async (req, res) => {
+    const result = await accountInformationService(req.body);
+    return result;
 }
 
 

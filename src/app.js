@@ -19,9 +19,9 @@ export const createApp = () => {
 
 
   app.use(express.json());
-  app.set('trust proxy', true);
+  app.set('trust proxy', 1);
   app.use(helmet());
-  
+
   app.get("/health", (_req, res) => {
     res.json({ success: true, message: "API is healthy" });
   });
