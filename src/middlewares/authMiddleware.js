@@ -1,8 +1,10 @@
+
+import { prisma } from '../../lib/prisma.js';
 import { errorResponse } from '../utils/apiResponse.js';
 import { verifyToken } from '../utils/generateToken.js';
 
-export const authMiddleware = (req, res, next) => {
-    
+export const authMiddleware = async (req, res, next) => {
+
     try {
         const token = req.cookies?.token;
         if (!token) {

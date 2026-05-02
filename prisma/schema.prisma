@@ -244,9 +244,6 @@ model uvki_category_description {
   meta_title       String @db.VarChar(255)
   meta_description String @db.VarChar(255)
   meta_keyword     String @db.VarChar(255)
- 
-  
-   
 
   @@id([category_id, language_id])
   @@index([name], map: "name")
@@ -1156,6 +1153,11 @@ model uvki_order {
   date_added              DateTime @db.DateTime(0)
   date_modified           DateTime @db.DateTime(0)
 
+  uvki_order_tracking uvki_order_tracking[]
+  uvki_order_history  uvki_order_history[]
+  uvki_order_product  uvki_order_product[]
+  uvki_order_total    uvki_order_total[]
+
   @@index([order_id], map: "order_id")
   @@index([order_status_id], map: "order_status_id")
 }
@@ -1167,6 +1169,8 @@ model uvki_order_history {
   notify           Boolean  @default(false)
   comment          String   @db.Text
   date_added       DateTime @db.DateTime(0)
+
+  uvki_order uvki_order @relation(fields: [order_id], references: [order_id])
 }
 
 model uvki_order_option {
@@ -1191,6 +1195,8 @@ model uvki_order_product {
   total            Decimal @default(0.0000) @db.Decimal(15, 4)
   tax              Decimal @default(0.0000) @db.Decimal(15, 4)
   reward           Int
+
+  uvki_order uvki_order @relation(fields: [order_id], references: [order_id])
 
   @@index([order_id], map: "order_id")
   @@index([order_id], map: "order_id_2")
@@ -1255,6 +1261,8 @@ model uvki_order_total {
   value          Decimal @default(0.0000) @db.Decimal(15, 4)
   sort_order     Int
 
+  uvki_order_product uvki_order @relation(fields: [order_id], references: [order_id])
+
   @@index([code], map: "code")
   @@index([order_id], map: "order_id")
   @@index([order_id], map: "order_id_2")
@@ -1266,6 +1274,8 @@ model uvki_order_tracking {
   shipingcompany    String   @db.VarChar(255)
   tracking_number   String   @db.VarChar(200)
   date_added        DateTime @db.Date
+
+  uvki_order uvki_order @relation(fields: [order_id], references: [order_id])
 }
 
 model uvki_order_voucher {
@@ -1316,12 +1326,12 @@ model uvki_product {
   date_added      DateTime @db.DateTime(0)
   date_modified   DateTime @db.DateTime(0)
 
- 
   uvki_product_description uvki_product_description[]
   uvki_product_image       uvki_product_image[]
-  uvki_manufacturer        uvki_manufacturer        @relation(fields: [manufacturer_id], references: [manufacturer_id])
+  uvki_manufacturer        uvki_manufacturer          @relation(fields: [manufacturer_id], references: [manufacturer_id])
   uvki_product_to_category uvki_product_to_category[]
-  uvki_product_special     uvki_product_special []
+  uvki_product_special     uvki_product_special[]
+
   @@index([product_id], map: "product_id")
   @@index([image], map: "square_image")
   @@index([status], map: "square_status")
@@ -1353,8 +1363,8 @@ model uvki_product_description {
   meta_title       String @db.VarChar(255)
   meta_description String @db.VarChar(255)
   meta_keyword     String @db.VarChar(255)
-   
-   uvki_product uvki_product @relation(fields: [product_id], references: [product_id])
+
+  uvki_product uvki_product @relation(fields: [product_id], references: [product_id])
 
   @@id([product_id, language_id])
   @@index([name], map: "name")
