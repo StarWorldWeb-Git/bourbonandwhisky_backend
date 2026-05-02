@@ -1,27 +1,37 @@
 import { errorResponse } from '../utils/apiResponse.js';
 import { verifyToken } from '../utils/generateToken.js';
 
- export const authMiddleware = (req, res, next) => {
+export const authMiddleware = (req, res, next) => {
+    
     try {
-        // Header se token lo
-        const authHeader = req.headers.authorization;
-
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return errorResponse(res, 401, 'No token provided');
+        const token = req.cookies?.token;
+        if (!token) {
+            return errorResponse(res, 401, 'Access denied, no token provided');
         }
 
-        const token = authHeader.split(' ')[1];
+        if (typeof token !== 'string' || token.trim() === '') {
+            return errorResponse(res, 401, 'Invalid token format');
+        }
 
-        // Token verify karo
         const decoded = verifyToken(token);
-        req.customer = decoded; // customer info attach karo request me
+
+        if (!decoded || !decoded.customer_id) {
+            return errorResponse(res, 401, 'Invalid token payload');
+        }
+
+        req.customer = decoded;
         next();
 
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
             return errorResponse(res, 401, 'Token expired, please login again');
         }
-        return errorResponse(res, 401, 'Invalid token');
+        if (error.name === 'JsonWebTokenError') {
+            return errorResponse(res, 401, 'Invalid token');
+        }
+        if (error.name === 'NotBeforeError') {
+            return errorResponse(res, 401, 'Token not active yet');
+        }
+        return errorResponse(res, 500, 'Authentication failed');
     }
-}
-
+};

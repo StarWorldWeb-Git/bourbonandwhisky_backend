@@ -6,215 +6,216 @@ import { transporter } from '../../config/nodemiller.js';
 
 
 export const sha1 = (str) => {
-    return crypto.createHash('sha1').update(str).digest('hex');
+  return crypto.createHash('sha1').update(str).digest('hex');
 };
 
 export const hashPassword = (password, salt) => {
-    const step1 = sha1(password);
-    const step2 = sha1(salt + step1);
-    const step3 = sha1(salt + step2);
-    return step3;
+  const step1 = sha1(password);
+  const step2 = sha1(salt + step1);
+  const step3 = sha1(salt + step2);
+  return step3;
 }
 
 export const generateSalt = (length = 9) => {
-    return crypto.randomBytes(16).toString('hex').substring(0, length);
+  return crypto.randomBytes(16).toString('hex').substring(0, length);
 }
 
 
 export const loginCustomer = async (data, ip) => {
-    const { email, password } = data;
+  const { email, password } = data;
 
-    const customer = await prisma.uvki_customer.findFirst({
-        where: {
-            email: email.toLowerCase().trim(),
-        },
-        select: {
-            customer_id: true,
-            firstname: true,
-            lastname: true,
-            email: true,
-            telephone: true,
-            password: true,
-            salt: true,
-            status: true,
-            customer_group_id: true
-        }
-    });
-
-    if (!customer) {
-        throw new Error('Invalid email or password');
+  const customer = await prisma.uvki_customer.findFirst({
+    where: {
+      email: email.toLowerCase().trim(),
+    },
+    select: {
+      customer_id: true,
+      firstname: true,
+      lastname: true,
+      email: true,
+      telephone: true,
+      password: true,
+      salt: true,
+      status: true,
+      customer_group_id: true
     }
+  });
+
+  if (!customer) {
+    throw new Error('Invalid email or password');
+  }
 
 
-    if (!customer.status) {
-        throw new Error('Your account is disabled. Contact support.');
+  if (!customer.status) {
+    throw new Error('Your account is disabled. Contact support.');
+  }
+
+  const hashedInput = hashPassword(password, customer.salt);
+  if (hashedInput !== customer.password) {
+    throw new Error('Invalid email or password');
+  }
+
+  await prisma.uvki_customer_ip.create({
+    data: {
+      customer_id: customer.customer_id,
+      ip: ip || '0.0.0.0',
+      date_added: new Date()
     }
+  });
 
-    const hashedInput = hashPassword(password, customer.salt);
-    if (hashedInput !== customer.password) {
-        throw new Error('Invalid email or password');
+
+  const token = generateToken({
+    customer_id: customer.customer_id,
+    email: customer.email,
+    customer_group_id: customer.customer_group_id
+  });
+
+
+  return {
+    token,
+    customer: {
+      customer_id: customer.customer_id,
+      firstname: customer.firstname,
+      lastname: customer.lastname,
+      email: customer.email,
+      telephone: customer.telephone
     }
-
-    await prisma.uvki_customer_ip.create({
-        data: {
-            customer_id: customer.customer_id,
-            ip: ip || '0.0.0.0',
-            date_added: new Date()
-        }
-    });
-
-
-    const token = generateToken({
-        customer_id: customer.customer_id,
-        email: customer.email,
-        customer_group_id: customer.customer_group_id
-    });
-
-    return {
-        token,
-        customer: {
-            customer_id: customer.customer_id,
-            firstname: customer.firstname,
-            lastname: customer.lastname,
-            email: customer.email,
-            telephone: customer.telephone
-        }
-    };
+  };
 }
 
 
 export const registerCustomer = async (data, ip) => {
-    const { firstname, lastname, email, telephone, password, newsletter } = data;
+  const { firstname, lastname, email, telephone, password, newsletter } = data;
 
 
-    const existing = await prisma.uvki_customer.findFirst({
-        where: { email: email.toLowerCase().trim() }
-    });
+  const existing = await prisma.uvki_customer.findFirst({
+    where: { email: email.toLowerCase().trim() }
+  });
 
-    if (existing) {
-        throw new Error('Email already registered');
+  if (existing) {
+    throw new Error('Email already registered');
+  }
+
+
+  const salt = generateSalt();
+  const hashedPassword = hashPassword(password, salt);
+
+
+  const newCustomer = await prisma.uvki_customer.create({
+    data: {
+      customer_group_id: 1,
+      store_id: 0,
+      language_id: 1,
+      firstname: firstname.trim(),
+      lastname: lastname.trim(),
+      email: email.toLowerCase().trim(),
+      telephone: telephone || '',
+      fax: '',
+      password: hashedPassword,
+      salt,
+      custom_field: '',
+      ip: ip || '0.0.0.0',
+      newsletter: Boolean(newsletter),
+      status: true,
+      safe: false,
+      token: '',
+      code: '',
+      date_added: new Date()
     }
+  });
 
+  const token = generateToken({
+    customer_id: newCustomer.customer_id,
+    email: newCustomer.email,
+    customer_group_id: newCustomer.customer_group_id
+  });
 
-    const salt = generateSalt();
-    const hashedPassword = hashPassword(password, salt);
-
-
-    const newCustomer = await prisma.uvki_customer.create({
-        data: {
-            customer_group_id: 1,
-            store_id: 0,
-            language_id: 1,
-            firstname: firstname.trim(),
-            lastname: lastname.trim(),
-            email: email.toLowerCase().trim(),
-            telephone: telephone || '',
-            fax: '',
-            password: hashedPassword,
-            salt,
-            custom_field: '',
-            ip: ip || '0.0.0.0',
-            newsletter: Boolean(newsletter),
-            status: true,
-            safe: false,
-            token: '',
-            code: '',
-            date_added: new Date()
-        }
-    });
-
-    const token = generateToken({
-        customer_id: newCustomer.customer_id,
-        email: newCustomer.email,
-        customer_group_id: newCustomer.customer_group_id
-    });
-
-    return {
-        token,
-        customer: {
-            customer_id: newCustomer.customer_id,
-            firstname: newCustomer.firstname,
-            lastname: newCustomer.lastname,
-            email: newCustomer.email
-        }
-    };
+  return {
+    token,
+    customer: {
+      customer_id: newCustomer.customer_id,
+      firstname: newCustomer.firstname,
+      lastname: newCustomer.lastname,
+      email: newCustomer.email
+    }
+  };
 }
 
 
 export const getProfile = async (customer_id) => {
-    const customer = await prisma.uvki_customer.findUnique({
-        where: { customer_id: Number(customer_id) },
-        select: {
-            customer_id: true,
-            firstname: true,
-            lastname: true,
-            email: true,
-            telephone: true,
-            date_added: true,
-            status: true
-        }
-    });
+  const customer = await prisma.uvki_customer.findUnique({
+    where: { customer_id: Number(customer_id) },
+    select: {
+      customer_id: true,
+      firstname: true,
+      lastname: true,
+      email: true,
+      telephone: true,
+      date_added: true,
+      status: true
+    }
+  });
 
-    if (!customer) throw new Error('Customer not found');
-    return customer;
+  if (!customer) throw new Error('Customer not found');
+  return customer;
 }
 
 export const changePasswordService = async (customer_id, { old_password, new_password }) => {
-    const customer = await prisma.uvki_customer.findUnique({
-        where: { customer_id: Number(customer_id) },
-        select: { password: true, salt: true }
-    });
+  const customer = await prisma.uvki_customer.findUnique({
+    where: { customer_id: Number(customer_id) },
+    select: { password: true, salt: true }
+  });
 
-    if (!customer) {
-        throw new Error('Customer not found');
-    }
+  if (!customer) {
+    throw new Error('Customer not found');
+  }
 
-    const hashedOldPassword = hashPassword(old_password, customer.salt);
-    if (hashedOldPassword !== customer.password) {
-        throw new Error('Current password is incorrect');
-    }
+  const hashedOldPassword = hashPassword(old_password, customer.salt);
+  if (hashedOldPassword !== customer.password) {
+    throw new Error('Current password is incorrect');
+  }
 
-    const salt = generateSalt();
-    const hashedNewPassword = hashPassword(new_password, salt);
+  const salt = generateSalt();
+  const hashedNewPassword = hashPassword(new_password, salt);
 
-    await prisma.uvki_customer.update({
-        where: { customer_id: Number(customer_id) },
-        data: { password: hashedNewPassword, salt }
-    });
+  await prisma.uvki_customer.update({
+    where: { customer_id: Number(customer_id) },
+    data: { password: hashedNewPassword, salt }
+  });
 
-    return { message: 'Password changed successfully' };
+  return { message: 'Password changed successfully' };
 }
 
 
 
 export const forgotPasswordRequestService = async (email) => {
-    const customer = await prisma.uvki_customer.findFirst({
-        where: { email: email.toLowerCase().trim() },
-        select: {
-            customer_id: true,
-            firstname: true,
-            email: true,
-            status: true
-        }
-    });
+  const customer = await prisma.uvki_customer.findFirst({
+    where: { email: email.toLowerCase().trim() },
+    select: {
+      customer_id: true,
+      firstname: true,
+      email: true,
+      status: true
+    }
+  });
 
-    if (!customer) throw new Error('No account found with this email');
-    if (!customer.status) throw new Error('Your account is disabled. Contact support.');
+  if (!customer) throw new Error('No account found with this email');
+  if (!customer.status) throw new Error('Your account is disabled. Contact support.');
 
-    const resetCode = crypto.randomBytes(16).toString('hex');
+  const resetCode = crypto.randomBytes(16).toString('hex');
 
-    await prisma.uvki_customer.update({
-        where: { customer_id: customer.customer_id },
-        data: { code: resetCode }
-    });
+  await prisma.uvki_customer.update({
+    where: { customer_id: customer.customer_id },
+    data: { code: resetCode }
+  });
 
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password?code=${resetCode}`;
+  const resetLink = `${process.env.FRONTEND_URL}/reset-password?code=${resetCode}`;
 
-    await transporter.sendMail({
-        from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM}>`,
-        to: customer.email,
-        subject: 'Reset Your Password - Bourbon and Whisky',
-        html: `
+  await transporter.sendMail({
+    from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM}>`,
+    to: customer.email,
+    subject: 'Reset Your Password - Bourbon and Whisky',
+    html: `
             <!DOCTYPE html>
 <html>
 <head>
@@ -350,60 +351,66 @@ export const forgotPasswordRequestService = async (email) => {
 </body>
 </html>
         `
-    });
+  });
 
-    return { message: 'Password reset link sent to your email' };
+  return { message: 'Password reset link sent to your email' };
 };
 
 export const resetPasswordService = async (code, new_password) => {
 
-    const customer = await prisma.uvki_customer.findFirst({
-        where: { code: code },
-        select: {
-            customer_id: true,
-            code: true
-        }
-    });
-
-    if (!customer || !customer.code) {
-        throw new Error('Invalid or expired reset link');
+  const customer = await prisma.uvki_customer.findFirst({
+    where: { code: code },
+    select: {
+      customer_id: true,
+      code: true
     }
-    const newSalt = generateSalt();
-    const newHashedPassword = hashPassword(new_password, newSalt);
+  });
 
-    await prisma.uvki_customer.update({
-        where: { customer_id: customer.customer_id },
-        data: {
-            password: newHashedPassword,
-            salt: newSalt,
-            code: ''
-        }
-    });
+  if (!customer || !customer.code) {
+    throw new Error('Invalid or expired reset link');
+  }
+  const newSalt = generateSalt();
+  const newHashedPassword = hashPassword(new_password, newSalt);
 
-    return { message: 'Password reset successfully. Please login.' };
+  await prisma.uvki_customer.update({
+    where: { customer_id: customer.customer_id },
+    data: {
+      password: newHashedPassword,
+      salt: newSalt,
+      code: ''
+    }
+  });
+
+  return { message: 'Password reset successfully. Please login.' };
 };
 
 export const accountInformationService = async (data) => {
+  const { customer_id, ...fields } = data;
+  if (!customer_id) throw new Error("customer_id is required");
 
-    const { customer_id, firstname, lastname, email, telephone } = data;
+  const [existing, emailExist] = await Promise.all([
+    prisma.uvki_customer.findFirst({ where: { customer_id: Number(customer_id) } }),
+    fields.email
+      ? prisma.uvki_customer.findFirst({
+        where: { email: fields.email.toLowerCase().trim(), NOT: { customer_id } }
+      })
+      : null
+  ]);
 
-    const emailExist = await prisma.uvki_customer.findFirst({
-        where: { email: email.toLowerCase().trim(),
-            NOT: {customer_id:customer_id}
-         },
-        
-    })
-    if (emailExist) {
-        throw new Error("Already email exist in another account")
-    }
-    const update = await prisma.uvki_customer.update({
-        where: { customer_id: Number(customer_id) },
-        data: {
-            firstname: firstname.trim(),
-            lastname: lastname.trim(),
-            email: email.trim(),
-            telephone: telephone.trim() 
-        }
-    })
-    return update;
-}
+  if (!existing) throw new Error("Customer not found");
+  if (emailExist) throw new Error("Email already exists in another account");
+
+
+  const updateData = Object.fromEntries(
+    Object.entries(fields)
+      .filter(([key, val]) => String(val).trim() !== String(existing[key]).trim())
+      .map(([key, val]) => [key, String(val).trim()])
+  );
+
+  if (!Object.keys(updateData).length) return { message: "No changes detected" };
+
+  return await prisma.uvki_customer.update({
+    where: { customer_id: Number(customer_id) },
+    data: updateData
+  });
+};

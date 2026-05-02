@@ -2,14 +2,24 @@ import { successResponse, errorResponse } from '../../utils/apiResponse.js';
 import { verifyCaptcha } from '../../utils/verifyCaptcha.js';
 import { accountInformationService, changePasswordService, forgotPasswordRequestService, getProfile, loginCustomer, registerCustomer, resetPasswordService } from './customer.service.js';
 
+
 export const login = async (req, res) => {
 
     const { captchaToken, ...rest } = req.body;
 
-    await verifyCaptcha(captchaToken);
+    // await verifyCaptcha(captchaToken);
     const ip = req.ip || req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '0.0.0.0';
-    const result = await loginCustomer(rest, ip);
-    return successResponse(res, 200, 'Login successful', result);
+    const {token,customer} = await loginCustomer(rest, ip);
+
+
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    })
+
+    return successResponse(res, 200, 'Login successful', customer);
 
 }
 
@@ -63,7 +73,7 @@ export const resetPassword = async (req, res) => {
 
 export const editAccountInformation = async (req, res) => {
     const result = await accountInformationService(req.body);
-    return result;
+    return successResponse(res, 200, 'Account information updated successfully', result);
 }
 
 

@@ -7,6 +7,7 @@ import categoriesRouter from "./modules/categories/category.routes.js";
 import manufacturerRouter from "./modules/manufacturer/manufacturer.routes.js";
 import customerRouter from "./modules/customer/customer.routes.js";
 import helmet from "helmet";
+import cookieParser from  "cookie-parser"
 export const createApp = () => {
 
   const app = express();
@@ -14,10 +15,11 @@ export const createApp = () => {
   app.use(
     cors({
       origin: "http://localhost:3000",
+      credentials:true
     })
   );
 
-
+  app.use(cookieParser())
   app.use(express.json());
   app.set('trust proxy', 1);
   app.use(helmet());
