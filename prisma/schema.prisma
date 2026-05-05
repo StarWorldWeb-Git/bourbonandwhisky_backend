@@ -547,9 +547,10 @@ model uvki_customer_transaction {
 }
 
 model uvki_customer_wishlist {
-  customer_id Int
-  product_id  Int
-  date_added  DateTime @db.DateTime(0)
+  customer_id  Int
+  product_id   Int
+  date_added   DateTime      @db.DateTime(0)
+  uvki_product uvki_product? @relation(fields: [product_id], references: [product_id])
 
   @@id([customer_id, product_id])
 }
@@ -1333,6 +1334,7 @@ model uvki_product {
   uvki_manufacturer        uvki_manufacturer          @relation(fields: [manufacturer_id], references: [manufacturer_id])
   uvki_product_to_category uvki_product_to_category[]
   uvki_product_special     uvki_product_special[]
+  uvki_customer_wishlist   uvki_customer_wishlist[]
 
   @@index([product_id], map: "product_id")
   @@index([image], map: "square_image")

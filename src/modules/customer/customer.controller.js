@@ -25,11 +25,11 @@ export const socialLogin = async (req, res) => {
 
 export const login = async (req, res) => {
 
-    const { captchaToken, ...rest } = req.body;
+    
 
     // await verifyCaptcha(captchaToken);
     const ip = req.ip || req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '0.0.0.0';
-    const { token, customer } = await loginCustomer(rest, ip);
+    const { token, customer } = await loginCustomer(req.body, ip, req.cookies);
 
 
     res.cookie('token', token, {

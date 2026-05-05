@@ -9,6 +9,8 @@ import categoriesRouter from "./modules/categories/category.routes.js";
 import manufacturerRouter from "./modules/manufacturer/manufacturer.routes.js";
 import customerRouter from "./modules/customer/customer.routes.js";
 import orderRouter from "./modules/customer order details/order.routes.js";
+import cartRouter from "./modules/cart/cart.routes.js";
+import wishlistRouter from "./modules/wishlish/wishlist.routes.js";
 export const createApp = () => {
 
   const app = express();
@@ -34,6 +36,8 @@ export const createApp = () => {
   app.use("/api/v1/manufacturer", manufacturerRouter);
   app.use("/api/v1/customer", customerRouter);
   app.use("/api/v1/customer-order",orderRouter)
+  app.use("/api/v1/cart", cartRouter);
+  app.use("/api/v1/wishlist", wishlistRouter);
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);
 
