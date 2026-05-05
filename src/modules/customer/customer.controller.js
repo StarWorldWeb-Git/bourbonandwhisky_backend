@@ -29,7 +29,7 @@ export const login = async (req, res) => {
 
     // await verifyCaptcha(captchaToken);
     const ip = req.ip || req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '0.0.0.0';
-    const {token,customer} = await loginCustomer(rest, ip);
+    const { token, customer } = await loginCustomer(rest, ip);
 
 
     res.cookie('token', token, {
@@ -93,7 +93,8 @@ export const resetPassword = async (req, res) => {
 
 export const editAccountInformation = async (req, res) => {
     const result = await accountInformationService(req.body);
-    return successResponse(res, 200, 'Account information updated successfully', result);
+    const { firstname, lastname, email, telephone } = result;
+    return successResponse(res, 200, 'Account information updated successfully', { firstname, lastname, email, telephone });
 }
 
 export const logout = async (req, res) => {

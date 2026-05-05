@@ -462,6 +462,7 @@ export const resetPasswordService = async (code, new_password) => {
 
 export const accountInformationService = async (data) => {
   const { customer_id, ...fields } = data;
+
   if (!customer_id) throw new Error("customer_id is required");
 
   const [existing, emailExist] = await Promise.all([
@@ -487,6 +488,6 @@ export const accountInformationService = async (data) => {
 
   return await prisma.uvki_customer.update({
     where: { customer_id: Number(customer_id) },
-    data: updateData
+    data: updateData,
   });
 };
