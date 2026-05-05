@@ -30,7 +30,7 @@ const registerLimiter = rateLimit({
 
 // Public Routes
 customerRouter.post('/social-login', asyncHandler(socialLogin));
-customerRouter.post('/login', loginRules, validate, asyncHandler(login));
+customerRouter.post('/login',loginLimiter, loginRules, validate, asyncHandler(login));
 customerRouter.post('/register', registerLimiter, registerRules, validate, asyncHandler(register));
 customerRouter.post('/forgot-password', asyncHandler(forgotPassword));
 customerRouter.post('/reset-password', asyncHandler(resetPassword));
