@@ -21,6 +21,82 @@ export const generateSalt = (length = 9) => {
 }
 
 
+export const socialLoginCustomer = async (data, ip) => {
+  const { firstname, lastname, email, oauth_provider, oauth_id } = data;
+  console.log(data)
+  let customer = await prisma.uvki_customer.findFirst({
+    where: { email: email.toLowerCase().trim() }
+  });
+
+  if (!customer) {
+    // Create new customer if not exists
+    customer = await prisma.uvki_customer.create({
+      data: {
+        customer_group_id: 1,
+        store_id: 0,
+        language_id: 1,
+        firstname: firstname ? firstname.trim() : 'User',
+        lastname: lastname ? lastname.trim() : '',
+        email: email.toLowerCase().trim(),
+        telephone: '',
+        fax: '',
+        password: null, // No password for social login
+        salt: null,
+        custom_field: '',
+        ip: ip || '0.0.0.0',
+        newsletter: false,
+        status: true,
+        safe: false,
+        token: '',
+        code: '',
+        date_added: new Date(),
+        oauth_provider,
+        oauth_id
+      }
+    });
+  } else {
+    // Update existing customer with oauth info if not present
+    if (!customer.oauth_provider) {
+      customer = await prisma.uvki_customer.update({
+        where: { customer_id: customer.customer_id },
+        data: {
+          oauth_provider,
+          oauth_id
+        }
+      });
+    }
+  }
+
+  if (!customer.status) {
+    throw new Error('Your account is disabled. Contact support.');
+  }
+
+  await prisma.uvki_customer_ip.create({
+    data: {
+      customer_id: customer.customer_id,
+      ip: ip || '0.0.0.0',
+      date_added: new Date()
+    }
+  });
+
+  const token = generateToken({
+    customer_id: customer.customer_id,
+    email: customer.email,
+    customer_group_id: customer.customer_group_id
+  });
+
+  return {
+    token,
+    customer: {
+      customer_id: customer.customer_id,
+      firstname: customer.firstname,
+      lastname: customer.lastname,
+      email: customer.email,
+      telephone: customer.telephone
+    }
+  };
+}
+
 export const loginCustomer = async (data, ip) => {
   const { email, password } = data;
 
@@ -209,7 +285,7 @@ export const forgotPasswordRequestService = async (email) => {
     data: { code: resetCode }
   });
 
-  const resetLink = `${process.env.FRONTEND_URL}/reset-password?code=${resetCode}`;
+  const resetLink = `${process.env.FRONTEND_URL}/reset?code=${resetCode}`;
 
   await transporter.sendMail({
     from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM}>`,

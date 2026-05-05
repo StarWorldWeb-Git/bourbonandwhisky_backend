@@ -1,7 +1,27 @@
 import { successResponse, errorResponse } from '../../utils/apiResponse.js';
 import { verifyCaptcha } from '../../utils/verifyCaptcha.js';
-import { accountInformationService, changePasswordService, forgotPasswordRequestService, getProfile, loginCustomer, registerCustomer, resetPasswordService } from './customer.service.js';
+import { accountInformationService, changePasswordService, forgotPasswordRequestService, getProfile, loginCustomer, registerCustomer, resetPasswordService, socialLoginCustomer } from './customer.service.js';
 
+
+export const socialLogin = async (req, res) => {
+    console.log("Social login request received:", req.body);
+    try {
+        const ip = req.ip || req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '0.0.0.0';
+        const { token, customer } = await socialLoginCustomer(req.body, ip);
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        return successResponse(res, 200, 'Social login successful', customer);
+    } catch (error) {
+        console.error("Social login error:", error.message);
+        return errorResponse(res, 500, error.message);
+    }
+}
 
 export const login = async (req, res) => {
 
@@ -13,7 +33,7 @@ export const login = async (req, res) => {
 
 
     res.cookie('token', token, {
-        httpOnly: true,
+        httpOnly: false,
         secure: process.env.NODE_ENV === "production",
         sameSite: 'strict',
         maxAge: 7 * 24 * 60 * 60 * 1000
@@ -74,6 +94,15 @@ export const resetPassword = async (req, res) => {
 export const editAccountInformation = async (req, res) => {
     const result = await accountInformationService(req.body);
     return successResponse(res, 200, 'Account information updated successfully', result);
+}
+
+export const logout = async (req, res) => {
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: 'strict',
+    });
+    return successResponse(res, 200, 'Logout successful');
 }
 
 

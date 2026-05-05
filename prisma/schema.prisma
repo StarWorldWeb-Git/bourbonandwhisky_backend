@@ -410,8 +410,8 @@ model uvki_customer {
   email             String   @db.VarChar(96)
   telephone         String   @db.VarChar(32)
   fax               String   @db.VarChar(32)
-  password          String   @db.VarChar(40)
-  salt              String   @db.VarChar(9)
+  password          String?  @db.VarChar(40)
+  salt              String?  @db.VarChar(9)
   cart              String?  @db.Text
   wishlist          String?  @db.Text
   newsletter        Boolean  @default(false)
@@ -423,6 +423,8 @@ model uvki_customer {
   token             String   @db.Text
   code              String   @db.VarChar(40)
   date_added        DateTime @db.DateTime(0)
+  oauth_provider    String?  @db.VarChar(50)
+  oauth_id          String?  @db.VarChar(255)
 }
 
 model uvki_customer_activity {

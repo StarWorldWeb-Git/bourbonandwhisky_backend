@@ -1,7 +1,7 @@
 
 import express, { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { login, register, profile, changePassword, forgotPassword, resetPassword, editAccountInformation } from './customer.controller.js';
+import { login, register, profile, changePassword, forgotPassword, resetPassword, editAccountInformation, socialLogin, logout } from './customer.controller.js';
 import { loginRules, registerRules, validate } from './customer.validation.js';
 import { authMiddleware } from '../../middlewares/authMiddleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -29,12 +29,14 @@ const registerLimiter = rateLimit({
 });
 
 // Public Routes
-customerRouter.post('/login', loginLimiter, loginRules, validate, asyncHandler(login));
+customerRouter.post('/social-login', asyncHandler(socialLogin));
+customerRouter.post('/login', loginRules, validate, asyncHandler(login));
 customerRouter.post('/register', registerLimiter, registerRules, validate, asyncHandler(register));
 customerRouter.post('/forgot-password', asyncHandler(forgotPassword));
 customerRouter.post('/reset-password', asyncHandler(resetPassword));
 
 // Protected Route (token required)
+customerRouter.post('/logout', authMiddleware, asyncHandler(logout));
 customerRouter.get('/profile', authMiddleware, asyncHandler(profile));
 customerRouter.post('/change-password', authMiddleware, asyncHandler(changePassword));
 customerRouter.put('/edit-information', authMiddleware, asyncHandler(editAccountInformation));
