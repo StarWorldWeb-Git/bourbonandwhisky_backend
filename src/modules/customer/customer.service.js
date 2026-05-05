@@ -236,7 +236,7 @@ export const getProfile = async (customer_id) => {
   return customer;
 }
 
-export const changePasswordService = async (customer_id, { old_password, new_password }) => {
+export const changePasswordService = async (customer_id, { new_password }) => {
   const customer = await prisma.uvki_customer.findUnique({
     where: { customer_id: Number(customer_id) },
     select: { password: true, salt: true }
@@ -244,11 +244,6 @@ export const changePasswordService = async (customer_id, { old_password, new_pas
 
   if (!customer) {
     throw new Error('Customer not found');
-  }
-
-  const hashedOldPassword = hashPassword(old_password, customer.salt);
-  if (hashedOldPassword !== customer.password) {
-    throw new Error('Current password is incorrect');
   }
 
   const salt = generateSalt();

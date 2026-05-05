@@ -38,6 +38,6 @@ customerRouter.post('/reset-password', asyncHandler(resetPassword));
 // Protected Route (token required)
 customerRouter.post('/logout', authMiddleware, asyncHandler(logout));
 customerRouter.get('/profile', authMiddleware, asyncHandler(profile));
-customerRouter.post('/change-password', authMiddleware, asyncHandler(changePassword));
+customerRouter.put('/change-password', authMiddleware, asyncHandler(changePassword));
 customerRouter.put('/edit-information', authMiddleware, asyncHandler(editAccountInformation));
 export default customerRouter;
