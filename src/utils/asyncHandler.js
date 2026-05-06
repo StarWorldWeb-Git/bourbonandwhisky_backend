@@ -1,4 +1,4 @@
-export function asyncHandler(handler) {
+export const  asyncHandler = (handler) => {
   return async function wrappedHandler(req, res, next) {
     try {
       await handler(req, res, next);

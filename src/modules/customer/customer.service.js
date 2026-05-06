@@ -288,7 +288,7 @@ export const forgotPasswordRequestService = async (email) => {
     data: { code: resetCode }
   });
 
-  const resetLink = `${process.env.FRONTEND_URL}/reset?code=${resetCode}`;
+  const resetLink = `${process.env.FRONTEND_URL}/account/reset?code=${resetCode}`;
 
   await transporter.sendMail({
     from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM}>`,

@@ -33,7 +33,7 @@ export const getCart = async (req, res) => {
   const sessionId = req.cookies?.guest_session || '';
 
   const items = await getCartService(req.query,{ sessionId, customerId });
-  return successResponse(res, 200, 'Cart fetched', { total: items.length, items });
+  return successResponse(res, 200, 'Cart fetched',  items || []);
 
 };
 
