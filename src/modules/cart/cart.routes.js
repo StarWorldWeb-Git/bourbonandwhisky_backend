@@ -16,7 +16,7 @@ const cartRouter = Router();
 cartRouter.get('/', optionalAuth, getCart);
 cartRouter.post('/add', optionalAuth, addToCart);
 cartRouter.put('/update', authMiddleware, updateCart);
-cartRouter.delete('/remove/:cart_id', optionalAuth, removeFromCart);
+cartRouter.delete('/delete/:cart_id', optionalAuth, removeFromCart);
 cartRouter.delete('/clear', authMiddleware, clearCart);
 
 export default cartRouter;

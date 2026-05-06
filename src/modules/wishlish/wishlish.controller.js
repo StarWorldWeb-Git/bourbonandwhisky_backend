@@ -9,17 +9,13 @@ import { successResponse, errorResponse } from '../../utils/apiResponse.js';
 const getCustomerId = (req) => req.customer?.customer_id || 0;
 
 export const getWishlist = async (req, res) => {
-  try {
     const items = await getWishlistService({ customerId: getCustomerId(req) });
     return successResponse(res, 200, 'Wishlist fetched', { total: items.length, items });
-  } catch (error) {
-    return errorResponse(res, 500, error.message);
-  }
 };
 
 
 export const addToWishlist = async (req, res) => {
-  try {
+ 
     const { product_id } = req.body;
     if (!product_id) return errorResponse(res, 400, 'product_id is required');
 
@@ -48,25 +44,17 @@ export const addToWishlist = async (req, res) => {
       result.already_exists ? 'Already in wishlist' : 'Added to wishlist',
       { source: 'db', ...result }
     );
-  } catch (error) {
-    return errorResponse(res, 500, error.message);
-  }
 };
 
 export const removeFromWishlist = async (req, res) => {
-  try {
     const productId  = Number(req.params.product_id);
     const customerId = getCustomerId(req);
-
-    await removeFromWishlistService({ customerId, productId });
-    return successResponse(res, 200, 'Removed from wishlist');
-  } catch (error) {
-    return errorResponse(res, 500, error.message);
-  }
+   const deleted = await removeFromWishlistService({ customerId, productId });
+    return successResponse(res, 200, 'Removed from wishlist', deleted);
 };
 
 export const checkWishlist = async (req, res) => {
-  try {
+  
     const customerId = getCustomerId(req);
     const productId  = Number(req.params.product_id);
 
@@ -78,7 +66,4 @@ export const checkWishlist = async (req, res) => {
 
     const inWishlist = await isInWishlistService({ customerId, productId });
     return successResponse(res, 200, 'Checked', { inWishlist });
-  } catch (error) {
-    return errorResponse(res, 500, error.message);
-  }
 };

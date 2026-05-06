@@ -3,6 +3,7 @@ import { prisma } from '../../../lib/prisma.js';
 import { generateToken } from '../../utils/generateToken.js';
 import { transporter } from '../../config/nodemiller.js';
 import { mergeGuestWishlistService } from '../wishlish/wishlist.service.js';
+import { mergeGuestCartService } from '../cart/cart.service.js';
 
 
 

@@ -211,6 +211,8 @@ model uvki_cart {
   quantity     Int
   date_added   DateTime @db.DateTime(0)
 
+  uvki_product uvki_product? @relation(fields: [product_id], references: [product_id])
+  
   @@index([api_id, customer_id, session_id, product_id, recurring_id], map: "cart_id")
 }
 
@@ -1335,7 +1337,7 @@ model uvki_product {
   uvki_product_to_category uvki_product_to_category[]
   uvki_product_special     uvki_product_special[]
   uvki_customer_wishlist   uvki_customer_wishlist[]
-
+  uvki_cart                   uvki_cart[]
   @@index([product_id], map: "product_id")
   @@index([image], map: "square_image")
   @@index([status], map: "square_status")
@@ -1369,7 +1371,7 @@ model uvki_product_description {
   meta_keyword     String @db.VarChar(255)
 
   uvki_product uvki_product @relation(fields: [product_id], references: [product_id])
-
+  
   @@id([product_id, language_id])
   @@index([name], map: "name")
 }

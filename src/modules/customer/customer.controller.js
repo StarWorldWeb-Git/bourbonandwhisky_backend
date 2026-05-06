@@ -98,11 +98,18 @@ export const editAccountInformation = async (req, res) => {
 }
 
 export const logout = async (req, res) => {
-    res.clearCookie('token', {
+    const cookiesToClear = ['token', 'guest_wishlist', 'guest_session'];
+    
+    const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: 'strict',
+    };
+
+    cookiesToClear.forEach(cookieName => {
+        res.clearCookie(cookieName, cookieOptions);
     });
+
     return successResponse(res, 200, 'Logout successful');
 }
 

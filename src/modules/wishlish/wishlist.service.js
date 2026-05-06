@@ -30,7 +30,8 @@ export const addToWishlistService = async ({ customerId, productId }) => {
 
 export const getWishlistService = async ({ customerId, LANGUAGE_ID = 1 }) => {
 
-  const items = await prisma.uvki_customer_wishlist.findMany({
+  const [items, total] = await Promise.all([
+    await prisma.uvki_customer_wishlist.findMany({
     where: { customer_id: customerId },
     orderBy: { date_added: 'desc' },
     include: {
@@ -48,7 +49,8 @@ export const getWishlistService = async ({ customerId, LANGUAGE_ID = 1 }) => {
         }
       }
     }
-  });
+  })
+  ])
 
   const formattedItems = items.map(item => ({
     product_id: item.product_id,
@@ -66,7 +68,8 @@ export const getWishlistService = async ({ customerId, LANGUAGE_ID = 1 }) => {
 
 
 export const removeFromWishlistService = async ({ customerId, productId }) => {
-  return await prisma.uvki_customer_wishlist.delete({
+
+  const deleted = await prisma.uvki_customer_wishlist.delete({
     where: {
       customer_id_product_id: {
         customer_id: customerId,
@@ -74,6 +77,7 @@ export const removeFromWishlistService = async ({ customerId, productId }) => {
       },
     },
   });
+  return deleted;
 };
 
 
