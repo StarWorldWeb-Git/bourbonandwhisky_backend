@@ -9,7 +9,7 @@ import { successResponse, errorResponse } from '../../utils/apiResponse.js';
 const getCustomerId = (req) => req.customer?.customer_id || 0;
 
 export const getWishlist = async (req, res) => {
-    const items = await getWishlistService({ customerId: getCustomerId(req) });
+    const items = await getWishlistService(req.query, { customerId: getCustomerId(req) });
     return successResponse(res, 200, 'Wishlist fetched', { total: items.length, items });
 };
 

@@ -1,5 +1,9 @@
+import { query } from 'express-validator';
 import { prisma } from '../../../lib/prisma.js';
+import { parsePositiveInt } from '../../utils/parsePostiveInt.js';
 
+const DEFAULT_LIMIT = 12;
+const MAX_LIMIT = 100;
 
 export const addToWishlistService = async ({ customerId, productId }) => {
 
@@ -28,28 +32,36 @@ export const addToWishlistService = async ({ customerId, productId }) => {
 };
 
 
-export const getWishlistService = async ({ customerId, LANGUAGE_ID = 1 }) => {
+export const getWishlistService = async (query,{ customerId, LANGUAGE_ID = 1 }) => {
+
+  const page = parsePositiveInt(query.page, 1);
+  const requestedLimit = parsePositiveInt(query.limit, DEFAULT_LIMIT);
+  const limit = Math.min(requestedLimit, MAX_LIMIT);
+  const skip = (page - 1) * limit;
 
   const [items, total] = await Promise.all([
     await prisma.uvki_customer_wishlist.findMany({
-    where: { customer_id: customerId },
-    orderBy: { date_added: 'desc' },
-    include: {
-      uvki_product: {
-        select: {
-          product_id: true,
-          price: true,
-          image: true,
-          status: true,
-          quantity: true,
-          uvki_product_description: {
-            where: { language_id: LANGUAGE_ID },
-            select: { name: true },
+      where: { customer_id: customerId },
+      orderBy: { date_added: 'desc' },
+      include: {
+        uvki_product: {
+          select: {
+            product_id: true,
+            price: true,
+            image: true,
+            status: true,
+            quantity: true,
+            uvki_product_description: {
+              where: { language_id: LANGUAGE_ID },
+              select: { name: true },
+            }
           }
         }
       }
-    }
-  })
+    }),
+    prisma.uvki_customer_wishlist.count({
+      where: { customer_id: customerId },
+    }),
   ])
 
   const formattedItems = items.map(item => ({
@@ -63,8 +75,15 @@ export const getWishlistService = async ({ customerId, LANGUAGE_ID = 1 }) => {
   }));
 
 
-  return formattedItems;
-};
+  return {
+    total,
+    page,
+    limit,
+    items: formattedItems,
+    totalPages: Math.ceil(total / limit),
+  };
+} 
+ 
 
 
 export const removeFromWishlistService = async ({ customerId, productId }) => {
