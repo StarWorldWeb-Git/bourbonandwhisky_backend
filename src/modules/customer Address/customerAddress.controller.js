@@ -1,75 +1,68 @@
-import { successResponse } from '../../utils/apiResponse';
-import { getAddressById, getAddressesByCustomer,createAddressServices,deleteAddress,setDefaultAddress,updateAddress } from './customerAddress.service';
+import { successResponse } from '../../utils/apiResponse.js';
+import { getAddressById, getAddressesByCustomer, createAddressServices, getCountriesService, updateAddressServices, deleteAddressServices, setDefaultAddressServices, getZonesByCountryService } from './customerAddress.service.js';
 
 
 
 
-export const getAddresses = async (req, res, next) => {
-  try {
-    const { customerId } = req.params;
+export const getAddresses = async (req, res) => {
+
+    const customerId  = req.customer.customer_id
     const addresses = await getAddressesByCustomer(customerId);
-    successResponse(res, addresses, 'Addresses fetched successfully');
-  } catch (err) {
-    next(err);
-  }
+   return successResponse(res, 200, 'Addresses fetched successfully', addresses);
+
 };
 
-export const getAddress = async (req, res, next) => {
-  try {
+export const getAddress = async (req, res) => {
+
     const { customerId, addressId } = req.params;
     const address = await getAddressById(addressId, customerId);
-    successResponse(res, address, 'Address fetched successfully');
-  } catch (err) {
-    next(err);
-  }
+   return successResponse(res, 200, 'Address fetched successfully', address);
+
 };
 
-export const createAddress = async (req, res, next) => {
-  try {
-    const { customerId } = req.params;
+export const createAddress = async (req, res) => {
+
+    const customerId  = req.customer.customer_id
+    console.log("Creating address for customer:", customerId);
     const address = await createAddressServices(customerId, req.body);
-    successResponse(res, address, 'Address created successfully', 201);
-  } catch (err) {
-    next(err);
-  }
+   return successResponse(res, 201, 'Address created successfully', address);
+
 };
 
-/**
- * PUT /api/customers/:customerId/addresses/:addressId
- */
-export const updateAddress = async (req, res, next) => {
-  try {
+
+export const updateAddress = async (req, res) => {
+
     const { customerId, addressId } = req.params;
-    const address = await updateAddress(addressId, customerId, req.body);
-    successResponse(res, address, 'Address updated successfully');
-  } catch (err) {
-    next(err);
-  }
+    const address = await updateAddressServices(addressId, customerId, req.body);
+   return successResponse(res, 200, 'Address updated successfully', address);
+
 };
 
-/**
- * DELETE /api/customers/:customerId/addresses/:addressId
- */
-export const deleteAddress = async (req, res, next) => {
-  try {
+export const deleteAddress = async (req, res) => {
+
     const { customerId, addressId } = req.params;
-    await deleteAddress(addressId, customerId);
-    successResponse(res, null, 'Address deleted successfully');
-  } catch (err) {
-    next(err);
-  }
+    await deleteAddressServices(addressId, customerId);
+   return successResponse(res, 200, 'Address deleted successfully');
+
 };
 
-/**
- * PATCH /api/customers/:customerId/addresses/:addressId/default
- */
- export const setDefaultAddress = async (req, res, next) => {
-  try {
+
+export const setDefaultAddress = async (req, res) => {
+
     const { customerId, addressId } = req.params;
-    const result = await setDefaultAddress(customerId, addressId);
-    successResponse(res, result, 'Default address updated');
-  } catch (err) {
-    next(err);
-  }
+    const result = await setDefaultAddressServices(customerId, addressId);
+   return successResponse(res, 200, 'Default address updated', result);
+
 };
 
+
+export const getCountries = async (req, res) => {
+    const countries = await getCountriesService();
+   return successResponse(res,200,'Countries fetched successfully',countries);
+}
+
+export const getZones = async (req, res) => {
+    const { countryId } = req.params;   
+    const zone = await getZonesByCountryService(countryId);
+   return successResponse(res,200,'Zones fetched successfully',zone);
+}

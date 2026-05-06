@@ -11,6 +11,7 @@ import customerRouter from "./modules/customer/customer.routes.js";
 import orderRouter from "./modules/customer order details/order.routes.js";
 import cartRouter from "./modules/cart/cart.routes.js";
 import wishlistRouter from "./modules/wishlish/wishlist.routes.js";
+import customerAddressRoutes from "./modules/customer Address/customerAddress.routes.js";
 export const createApp = () => {
 
   const app = express();
@@ -38,6 +39,7 @@ export const createApp = () => {
   app.use("/api/v1/customer-order",orderRouter)
   app.use("/api/v1/cart", cartRouter);
   app.use("/api/v1/wishlist", wishlistRouter);
+  app.use("/api/v1/customer-address", customerAddressRoutes);
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);
 

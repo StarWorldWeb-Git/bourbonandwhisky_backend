@@ -1,15 +1,17 @@
 import { Router } from 'express';
-import { createAddress, deleteAddress, getAddress, getAddresses, setDefaultAddress, updateAddress } from './customerAddress.controller';
-import { addressValidation, updateValidation } from '../../utils/address.validation';
-import { authMiddleware } from '../../middlewares/authMiddleware';
-import { asyncHandler } from '../../utils/asyncHandler';
+import { createAddress, deleteAddress, getAddress, getAddresses, getCountries, getZones, setDefaultAddress, updateAddress } from './customerAddress.controller.js';
+import { addressValidation, updateValidation } from '../../utils/address.validation.js';
+import { authMiddleware } from '../../middlewares/authMiddleware.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 
 
 
 const customerAddressRoutes = Router();
 
+customerAddressRoutes.get('/countries',  authMiddleware, asyncHandler(getCountries));
+customerAddressRoutes.get('/zones/:countryId',  authMiddleware, asyncHandler(getZones));
 customerAddressRoutes.get('/',  authMiddleware, asyncHandler(getAddresses));
-customerAddressRoutes.post('/', addressValidation,  authMiddleware, asyncHandler(createAddress));
+customerAddressRoutes.post('/create-address', addressValidation,  authMiddleware, asyncHandler(createAddress));
 customerAddressRoutes.get('/:addressId',  authMiddleware, asyncHandler(getAddress));
 customerAddressRoutes.put('/:addressId', updateValidation,  authMiddleware, asyncHandler(updateAddress));
 customerAddressRoutes.delete('/:addressId',  authMiddleware, asyncHandler(deleteAddress));

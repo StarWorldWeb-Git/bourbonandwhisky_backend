@@ -111,6 +111,9 @@ model uvki_address {
   zone_id      Int    @default(0)
   custom_field String @db.Text
 
+  uvki_country uvki_country @relation(fields: [country_id], references: [country_id])
+  uvki_zone    uvki_zone    @relation(fields: [zone_id], references: [zone_id])
+
   @@index([customer_id], map: "customer_id")
 }
 
@@ -300,6 +303,8 @@ model uvki_country {
   address_format    String  @db.Text
   postcode_required Boolean
   status            Boolean @default(true)
+
+  uvki_address uvki_address[]
 }
 
 model uvki_coupon {
@@ -2035,6 +2040,8 @@ model uvki_zone {
   name       String  @db.VarChar(128)
   code       String  @db.VarChar(32)
   status     Boolean @default(true)
+
+  uvki_address uvki_address []
 }
 
 model uvki_zone_to_geo_zone {

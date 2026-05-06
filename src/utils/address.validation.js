@@ -1,3 +1,5 @@
+import { body } from "express-validator";
+
  export const addressValidation = [
   body('firstname')  .notEmpty().withMessage('Firstname is required').isLength({ max: 32 }),
   body('lastname')   .notEmpty().withMessage('Lastname is required').isLength({ max: 32 }),
