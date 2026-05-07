@@ -1,5 +1,5 @@
 import { successResponse } from '../../utils/apiResponse.js';
-import { getAddressById, getAddressesByCustomer, createAddressServices, getCountriesService, updateAddressServices, deleteAddressServices, setDefaultAddressServices, getZonesByCountryService } from './customerAddress.service.js';
+import { getAddressById, getAddressesByCustomer, createAddressServices, getCountriesService, updateAddressServices, deleteAddressServices, getZonesByCountryService } from './customerAddress.service.js';
 
 
 
@@ -47,13 +47,6 @@ export const deleteAddress = async (req, res) => {
 };
 
 
-export const setDefaultAddress = async (req, res) => {
-
-    const { customerId, addressId } = req.params;
-    const result = await setDefaultAddressServices(customerId, addressId);
-   return successResponse(res, 200, 'Default address updated', result);
-
-};
 
 
 export const getCountries = async (req, res) => {

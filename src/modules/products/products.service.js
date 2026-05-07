@@ -166,6 +166,7 @@ export const getProductById = async (productId, languageId = 1) => {
       status: true,
       image: true,
       quantity: true,
+      product_id: true,
       uvki_product_description: {
         where: { language_id: languageId },
         take: 1,
@@ -214,6 +215,7 @@ export const getProductById = async (productId, languageId = 1) => {
     sku: product.sku,
     upc: product.upc,
     status: product.status,
+    product_id: product.product_id,
     image: product.image,
     images: product.uvki_product_image.map((img) => img.image),
     quantity: product.quantity,

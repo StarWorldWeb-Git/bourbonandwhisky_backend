@@ -1,19 +1,26 @@
 import { prisma } from "../../../lib/prisma.js";
 
 export const getAddressesByCustomer = async (customerId) => {
+    
+    const customer = await prisma.uvki_customer.findUnique({
+        where:  { customer_id: parseInt(customerId) },
+        select: { address_id: true },
+    });
+
     const addresses = await prisma.uvki_address.findMany({
-        where: { customer_id: parseInt(customerId) },
+        where:    { customer_id: parseInt(customerId) },
         include: {
-            uvki_country: {
-                select: { country_id: true, name: true, iso_code_2: true },
-            },
-            uvki_zone: {
-                select: { zone_id: true, name: true, code: true },
-            },
+            uvki_country: { select: { country_id: true, name: true, iso_code_2: true } },
+            uvki_zone:    { select: { zone_id: true, name: true, code: true } },
         },
         orderBy: { address_id: "asc" },
     });
-    return addresses;
+
+    
+    return addresses.map((addr) => ({
+        ...addr,
+        is_default: addr.address_id === customer.address_id,
+    }));
 };
 
 export const getAddressById = async (addressId, customerId) => {
@@ -74,25 +81,35 @@ export const createAddressServices = async (customerId, data) => {
 
     const address = await prisma.uvki_address.create({
         data: {
-            customer_id: parseInt(customerId),
-            firstname: data.firstname,
-            lastname: data.lastname,
-            company: data.company || "",
-            address_1: data.address_1,
-            address_2: data.address_2 || "",
-            city: data.city,
-            postcode: data.postcode,
-            country_id: parseInt(data.country_id),
-            zone_id: parseInt(data.zone_id),
+            customer_id:  parseInt(customerId),
+            firstname:    data.firstname,
+            lastname:     data.lastname,
+            company:      data.company || "",
+            address_1:    data.address_1,
+            address_2:    data.address_2 || "",
+            city:         data.city,
+            postcode:     data.postcode,
+            country_id:   parseInt(data.country_id),
+            zone_id:      parseInt(data.zone_id),
             custom_field: data.custom_field || "",
         },
         include: {
             uvki_country: { select: { country_id: true, name: true, iso_code_2: true } },
-            uvki_zone: { select: { zone_id: true, name: true, code: true } },
+            uvki_zone:    { select: { zone_id: true, name: true, code: true } },
         },
     });
 
-    return address;
+    if (data.default === true || data.default === "1") {
+        await prisma.uvki_customer.update({
+            where: { customer_id: parseInt(customerId) },
+            data:  { address_id: address.address_id },
+        });
+    }
+
+    return {
+        ...address,
+        is_default: data.default === true || data.default === "1",
+    };
 };
 
 export const updateAddressServices = async (addressId, customerId, data) => {
@@ -140,8 +157,18 @@ export const updateAddressServices = async (addressId, customerId, data) => {
         },
     });
 
-    return updated;
-};
+     if (data.default === true || data.default === "1") {
+        await prisma.uvki_customer.update({
+            where: { customer_id: parseInt(customerId) },
+            data:  { address_id: parseInt(addressId) },
+        });
+    }
+
+
+return {
+        ...updated,
+        is_default: data.default === true || data.default === "1",
+    };};
 
 export const deleteAddressServices = async (addressId, customerId) => {
     const existing = await prisma.uvki_address.findFirst({
@@ -163,26 +190,6 @@ export const deleteAddressServices = async (addressId, customerId) => {
     return { deleted: true };
 };
 
-export const setDefaultAddressServices = async (customerId, addressId) => {
-    const address = await prisma.uvki_address.findFirst({
-        where: {
-            address_id: parseInt(addressId),
-            customer_id: parseInt(customerId),
-        },
-    });
-    if (!address) {
-        const err = new Error("Address not found");
-        err.statusCode = 404;
-        throw err;
-    }
-
-    await prisma.uvki_customer.update({
-        where: { customer_id: parseInt(customerId) },
-        data: { address_id: parseInt(addressId) },
-    });
-
-    return { default_address_id: parseInt(addressId) };
-};
 
 
 export const getCountriesService = async () => {
