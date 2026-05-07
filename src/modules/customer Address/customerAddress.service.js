@@ -1,24 +1,51 @@
 import { prisma } from "../../../lib/prisma.js";
 
 export const getAddressesByCustomer = async (customerId) => {
-    
+
     const customer = await prisma.uvki_customer.findUnique({
-        where:  { customer_id: parseInt(customerId) },
+        where: { customer_id: parseInt(customerId) },
         select: { address_id: true },
     });
 
     const addresses = await prisma.uvki_address.findMany({
-        where:    { customer_id: parseInt(customerId) },
-        include: {
-            uvki_country: { select: { country_id: true, name: true, iso_code_2: true } },
-            uvki_zone:    { select: { zone_id: true, name: true, code: true } },
-        },
+        where: { customer_id: parseInt(customerId) },
         orderBy: { address_id: "asc" },
+        select: {
+            firstname: true,
+            lastname: true,
+            company: true,
+            address_1: true,
+            address_2: true,
+            postcode: true,
+            city:true,
+            address_id:true,
+            uvki_country: {
+                select: {
+                    name: true,
+                }
+            },
+            uvki_zone: {
+                select: {
+                    name: true
+                }
+            }
+
+        }
     });
 
-    
+
+
     return addresses.map((addr) => ({
-        ...addr,
+        firstname: addr.firstname,
+        lastname: addr.lastname,
+        company: addr.company,
+        address_1: addr.address_1,
+        address_2: addr.address_2,
+        postcode: addr.postcode,
+        country_name: addr.uvki_country.name,
+        city:addr.city,
+        zone_name: addr.uvki_zone.name,
+        address_id:addr.address_id,
         is_default: addr.address_id === customer.address_id,
     }));
 };
@@ -81,28 +108,25 @@ export const createAddressServices = async (customerId, data) => {
 
     const address = await prisma.uvki_address.create({
         data: {
-            customer_id:  parseInt(customerId),
-            firstname:    data.firstname,
-            lastname:     data.lastname,
-            company:      data.company || "",
-            address_1:    data.address_1,
-            address_2:    data.address_2 || "",
-            city:         data.city,
-            postcode:     data.postcode,
-            country_id:   parseInt(data.country_id),
-            zone_id:      parseInt(data.zone_id),
+            customer_id: parseInt(customerId),
+            firstname: data.firstname,
+            lastname: data.lastname,
+            company: data.company || "",
+            address_1: data.address_1,
+            address_2: data.address_2 || "",
+            city: data.city,
+            postcode: data.postcode,
+            country_id: parseInt(data.country_id),
+            zone_id: parseInt(data.zone_id),
             custom_field: data.custom_field || "",
         },
-        include: {
-            uvki_country: { select: { country_id: true, name: true, iso_code_2: true } },
-            uvki_zone:    { select: { zone_id: true, name: true, code: true } },
-        },
+
     });
 
     if (data.default === true || data.default === "1") {
         await prisma.uvki_customer.update({
             where: { customer_id: parseInt(customerId) },
-            data:  { address_id: address.address_id },
+            data: { address_id: address.address_id },
         });
     }
 
@@ -157,18 +181,19 @@ export const updateAddressServices = async (addressId, customerId, data) => {
         },
     });
 
-     if (data.default === true || data.default === "1") {
+    if (data.default === true || data.default === "1") {
         await prisma.uvki_customer.update({
             where: { customer_id: parseInt(customerId) },
-            data:  { address_id: parseInt(addressId) },
+            data: { address_id: parseInt(addressId) },
         });
     }
 
 
-return {
+    return {
         ...updated,
         is_default: data.default === true || data.default === "1",
-    };};
+    };
+};
 
 export const deleteAddressServices = async (addressId, customerId) => {
     const existing = await prisma.uvki_address.findFirst({

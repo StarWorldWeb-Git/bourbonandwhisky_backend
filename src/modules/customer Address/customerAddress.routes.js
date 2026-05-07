@@ -14,6 +14,6 @@ customerAddressRoutes.get('/',  authMiddleware, asyncHandler(getAddresses));
 customerAddressRoutes.post('/create-address', addressValidation,  authMiddleware, asyncHandler(createAddress));
 customerAddressRoutes.get('/:addressId',  authMiddleware, asyncHandler(getAddress));
 customerAddressRoutes.put('/:addressId', updateValidation,  authMiddleware, asyncHandler(updateAddress));
-customerAddressRoutes.delete('/:addressId',  authMiddleware, asyncHandler(deleteAddress));
+customerAddressRoutes.delete('/delete/:addressId',  authMiddleware, asyncHandler(deleteAddress));
 
 export default customerAddressRoutes;
