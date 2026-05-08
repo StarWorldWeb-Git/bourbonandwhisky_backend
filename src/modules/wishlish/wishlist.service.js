@@ -54,6 +54,16 @@ export const getWishlistService = async (query,{ customerId, LANGUAGE_ID = 1 }) 
             uvki_product_description: {
               where: { language_id: LANGUAGE_ID },
               select: { name: true },
+            },
+            uvki_product_special: {
+              select: {
+                price: true,
+                date_start: true,
+                date_end: true,
+                priority: true,
+              },
+              orderBy: { priority: 'asc' },
+              take: 1,
             }
           }
         }
@@ -69,6 +79,7 @@ export const getWishlistService = async (query,{ customerId, LANGUAGE_ID = 1 }) 
     date_added: item.date_added,
     name: item.uvki_product?.uvki_product_description?.[0]?.name ?? null,
     price: item.uvki_product?.price ?? null,
+    spacial_price:item.uvki_product?.uvki_product_special?.[0]?.price ?? null,
     image: item.uvki_product?.image ?? null,
     status: item.uvki_product?.status ?? null,
     in_stock: (item.uvki_product?.quantity ?? 0) > 0,
