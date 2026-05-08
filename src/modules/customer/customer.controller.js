@@ -4,8 +4,7 @@ import { accountInformationService, changePasswordService, forgotPasswordRequest
 
 
 export const socialLogin = async (req, res) => {
-    console.log("Social login request received:", req.body);
-    try {
+   
         const ip = req.ip || req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '0.0.0.0';
         const { token, customer } = await socialLoginCustomer(req.body, ip);
 
@@ -17,10 +16,6 @@ export const socialLogin = async (req, res) => {
         });
 
         return successResponse(res, 200, 'Social login successful', customer);
-    } catch (error) {
-        console.error("Social login error:", error.message);
-        return errorResponse(res, 500, error.message);
-    }
 }
 
 export const login = async (req, res) => {

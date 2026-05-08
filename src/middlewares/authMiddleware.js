@@ -1,12 +1,11 @@
-
 import { prisma } from '../../lib/prisma.js';
 import { errorResponse } from '../utils/apiResponse.js';
 import { verifyToken } from '../utils/generateToken.js';
 
 export const authMiddleware = async (req, res, next) => {
-
     try {
-        const token = req.cookies?.token;
+        const token = req.cookies?.token || req.headers?.authorization?.split(' ')[1];
+
         if (!token) {
             return errorResponse(res, 401, 'Access denied, no token provided');
         }

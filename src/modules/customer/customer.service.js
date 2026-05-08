@@ -25,7 +25,6 @@ export const generateSalt = (length = 9) => {
 
 export const socialLoginCustomer = async (data, ip) => {
   const { firstname, lastname, email, oauth_provider, oauth_id } = data;
-  console.log(data)
   let customer = await prisma.uvki_customer.findFirst({
     where: { email: email.toLowerCase().trim() }
   });
