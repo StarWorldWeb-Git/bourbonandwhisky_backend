@@ -19,6 +19,8 @@ export const getAddressesByCustomer = async (customerId) => {
             postcode: true,
             city:true,
             address_id:true,
+            country_id:true,
+            zone_id:true,
             uvki_country: {
                 select: {
                     name: true,
@@ -43,8 +45,10 @@ export const getAddressesByCustomer = async (customerId) => {
         address_2: addr.address_2,
         postcode: addr.postcode,
         country_name: addr.uvki_country.name,
+        country_id:addr.country_id,
         city:addr.city,
         zone_name: addr.uvki_zone.name,
+        zone_id:addr.zone_id,
         address_id:addr.address_id,
         is_default: addr.address_id === customer.address_id,
     }));

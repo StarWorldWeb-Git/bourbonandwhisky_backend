@@ -3,9 +3,10 @@ import { errorResponse } from '../utils/apiResponse.js';
 import { verifyToken } from '../utils/generateToken.js';
 
 export const authMiddleware = async (req, res, next) => {
+    console.log(req.cookies)
     try {
         const token = req.cookies?.token || req.headers?.authorization?.split(' ')[1];
-
+        console.log("token",token)
         if (!token) {
             return errorResponse(res, 401, 'Access denied, no token provided');
         }

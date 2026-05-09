@@ -12,6 +12,8 @@ import orderRouter from "./modules/customer order details/order.routes.js";
 import cartRouter from "./modules/cart/cart.routes.js";
 import wishlistRouter from "./modules/wishlish/wishlist.routes.js";
 import customerAddressRoutes from "./modules/customer Address/customerAddress.routes.js";
+import checkoutRouter from "./modules/checkout/checkout.routes.js";
+import CO_paymentRouter from "./modules/customer order payment/CO_payment.routes.js";
 export const createApp = () => {
 
   const app = express();
@@ -27,11 +29,11 @@ export const createApp = () => {
   app.use(express.json());
   app.set('trust proxy', 1);
   app.use(helmet());
-
+  
   app.get("/health", (_req, res) => {
     res.json({ success: true, message: "API is healthy" });
   });
-
+  
   app.use("/api/v1/products", productsRouter);
   app.use("/api/v1/categories", categoriesRouter);
   app.use("/api/v1/manufacturer", manufacturerRouter);
@@ -40,6 +42,8 @@ export const createApp = () => {
   app.use("/api/v1/cart", cartRouter);
   app.use("/api/v1/wishlist", wishlistRouter);
   app.use("/api/v1/customer-address", customerAddressRoutes);
+  app.use("/api/v1/checkout",checkoutRouter)
+  app.use("/api/v1/payment",CO_paymentRouter)
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);
 
