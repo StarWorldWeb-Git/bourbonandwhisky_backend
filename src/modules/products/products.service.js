@@ -431,3 +431,62 @@ export const BourbonDataService = async () => {
     }))
   };
 };
+
+export const getSliderDataService = async () => {
+  const sliderModule = await prisma.uvki_journal3_module.findFirst({
+    where: {
+      module_type: "master_slider",
+      module_name: "Slider Top Home"
+    },
+    select: { module_data: true }
+  });
+
+  const data = JSON.parse(sliderModule.module_data);
+
+  const slides = data.items
+    .filter((slide) => slide.status.status === "true") 
+    .map((slide) => {
+     
+      const label = slide.items?.find((i) => i.name === "Label");
+      const mainText = slide.items?.find((i) => i.name === "Main Text");
+      const button = slide.items?.find((i) => i.name === "Button");
+
+      return {
+        id: slide.id,
+        name: slide.name,
+        image: slide.image?.lang_1,           
+        alt: slide.alt?.lang_1,
+        label: label?.text?.lang_1,            
+        title: mainText?.text?.lang_1,         
+        button_text: button?.text?.lang_1,    
+        button_link_id: button?.link?.id,     
+        button_link_type: button?.link?.type,  
+      };
+    });
+
+  return { slides };
+};
+
+export const getBannersDataService = async () => {
+  const bannerModule = await prisma.uvki_journal3_module.findFirst({
+    where: {
+      module_type: "banners",
+      module_name: "Banners Top Home"
+    },
+    select: { module_data: true }
+  });
+
+  const data = JSON.parse(bannerModule.module_data);
+
+  const banners = data.items
+    .filter((item) => item.status.status === "true") 
+    .map((item) => ({
+      name: item.name,
+      image: item.image?.lang_1,
+      alt: item.alt?.lang_1,
+      link_type: item.link?.type,   
+      link_id: item.link?.id,       
+    }));
+
+  return { banners };
+};

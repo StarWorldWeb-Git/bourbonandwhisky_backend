@@ -1,7 +1,7 @@
 import { prisma } from "../../../lib/prisma.js";
 import { successResponse } from "../../utils/apiResponse.js";
 import { HttpError } from "../../utils/httpError.js";
-import { BourbonDataService, countProductViewedService, getFeaturedProductsService, getProductById, listProducts, mostviewdproductservice, parseProductId } from "./products.service.js";
+import { BourbonDataService, countProductViewedService, getBannersDataService, getFeaturedProductsService, getProductById, getSliderDataService, listProducts, mostviewdproductservice, parseProductId } from "./products.service.js";
 
 export const listProductsController = async (req, res) => {
   const result = await listProducts(req.query);
@@ -58,5 +58,14 @@ export const bestSellerProduct = async (req,res) => {
 
 export const BourbonData =  async(req,res)=>{
   const result = await BourbonDataService();
+  return successResponse(res,200,"",result)
+}
+
+export const HomePageSlider =  async (req,res)=>{
+  const result = await getSliderDataService();
+  return successResponse(res,200,"",result)
+}
+export const HomePageBanner =  async (req,res)=>{
+  const result = await getBannersDataService();
   return successResponse(res,200,"",result)
 }
