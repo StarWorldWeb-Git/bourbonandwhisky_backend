@@ -1,6 +1,6 @@
 
 import { successResponse } from "../../utils/apiResponse.js";
-import { listingCategoriesServices, showLimitCategoriesServices, showProductByCategoriesIdService, showTopCategoryService } from "./category.service.js";
+import { getHomepageDataService, listingCategoriesServices, showLimitCategoriesServices, showProductByCategoriesIdService } from "./category.service.js";
 
 
 
@@ -24,7 +24,7 @@ export const showProductByCategoryId = async (req, res) => {
 
 export const showTopCategory = async (req, res) => {
 
-    const category = await showTopCategoryService();
+    const category = await getHomepageDataService();
     return successResponse(res, 200, "", category)
 
 }

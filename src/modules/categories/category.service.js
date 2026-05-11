@@ -124,25 +124,34 @@ export const showProductByCategoriesIdService = async (category_id) => {
   return data;
 };
 
-export const showTopCategoryService = async () => {
-  const module = await prisma.uvki_journal3_module.findFirst({
-    where: {
-      module_type: "info_blocks",
-      module_name: "Bourbon & Whisky Blocks"
-    },
-    select: { module_data: true }
-  });
+export const getHomepageDataService = async () => {
+  
+  const [categoriesModule, titleModule] = await Promise.all([
+    prisma.uvki_journal3_module.findFirst({
+      where: { 
+        module_type: "info_blocks",
+        module_name: "Bourbon & Whisky Blocks"
+      },
+      select: { module_data: true }
+    }),
+    prisma.uvki_journal3_module.findUnique({
+      where: { module_id: 147 },
+      select: { module_data: true }
+    })
+  ]);
 
-  const data = JSON.parse(module.module_data);
+  const categoriesData = JSON.parse(categoriesModule.module_data);
+  const titleData = JSON.parse(titleModule.module_data);
 
-  const categories = data.items
-    .filter((item) => item.status.status === "true")
-    .map((item) => ({
-      name: item.title.lang_1,
-      image: item.image.lang_1,
-      category_id: item.link.id,
-    }));
-
-  return categories;
-
-}
+  return {
+    title: titleData.general.title.lang_1,
+    description: titleData.general.subtitle.lang_1,
+    categories: categoriesData.items
+      .filter((item) => item.status.status === "true")
+      .map((item) => ({
+        name: item.title.lang_1,
+        image: item.image.lang_1,
+        category_id: item.link.id,
+      })),
+  };
+};
