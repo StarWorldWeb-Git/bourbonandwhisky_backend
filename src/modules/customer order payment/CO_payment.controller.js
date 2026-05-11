@@ -2,12 +2,7 @@
 
 import { constructWebhookEvent, createPaymentIntent } from "./CO_payment.service.js";
 
-
-// const { placeOrder } = require("../checkout/checkout.service");
-
-
  export  const createIntent = async (req, res) => {
-  try {
     const { amount, customer_email } = req.body;
 
     if (!amount || amount <= 0) {
@@ -20,10 +15,7 @@ import { constructWebhookEvent, createPaymentIntent } from "./CO_payment.service
       success: true,
       client_secret: intent.client_secret, 
     });
-  } catch (error) {
-    console.error("Payment Intent Error:", error.message);
-    return res.status(500).json({ success: false, message: "Payment setup failed" });
-  }
+
 };
 
 

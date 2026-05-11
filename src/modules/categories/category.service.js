@@ -66,3 +66,7 @@ export const showLimitCategoriesServices = async (query) => {
 
   return result;
 };
+
+export const showProductByCategoriesId  =  async(query)=>{
+
+}
