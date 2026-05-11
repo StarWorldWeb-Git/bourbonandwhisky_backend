@@ -1,6 +1,7 @@
 import { prisma } from "../../../lib/prisma.js";
+import { successResponse } from "../../utils/apiResponse.js";
 import { HttpError } from "../../utils/httpError.js";
-import { countProductViewedService, getProductById, listProducts, mostviewdproductservice, parseProductId } from "./products.service.js";
+import { BourbonDataService, countProductViewedService, getFeaturedProductsService, getProductById, listProducts, mostviewdproductservice, parseProductId } from "./products.service.js";
 
 export const listProductsController = async (req, res) => {
   const result = await listProducts(req.query);
@@ -50,7 +51,12 @@ export const CountProductViewedController = async (req, res) => {
 
 
 
-// export const bestSellerProduct = async () => {
+export const bestSellerProduct = async (req,res) => {
+  const result  = await getFeaturedProductsService();
+  return successResponse(res,200,"",result)
+}
 
-//   const result  = await 
-// }
+export const BourbonData =  async(req,res)=>{
+  const result = await BourbonDataService();
+  return successResponse(res,200,"",result)
+}

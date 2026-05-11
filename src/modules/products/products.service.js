@@ -299,3 +299,135 @@ export const countProductViewedService = async (params) => {
 
   return result;
 }
+
+
+export const getFeaturedProductsService = async () => {
+
+  const productSelect = {
+    product_id: true,
+    price: true,
+    image: true,
+    viewed: true,
+    date_added: true,
+    uvki_product_description: {
+      where: { language_id: 1 },
+      select: { name: true }
+    },
+    uvki_product_special: {  // special price
+      select: { price: true },
+      orderBy: { priority: "asc" },
+      take: 1
+    }
+  };
+
+  const [latest, special, bestsellers] = await Promise.all([
+
+    // ── Latest Products — date_added se ──
+    prisma.uvki_product.findMany({
+      where: { status: true },
+      orderBy: { date_added: "desc" },
+      take: 10,
+      select: productSelect
+    }),
+
+    // ── Special Deals — uvki_product_special table se ──
+    prisma.uvki_product.findMany({
+      where: {
+        status: true,
+        uvki_product_special: { some: {} }  
+      },
+      take: 10,
+      select: productSelect
+    }),
+
+    // ── Bestsellers — order history se raw query ──
+    prisma.$queryRaw`
+      SELECT 
+        p.product_id,
+        p.price,
+        p.image,
+        pd.name,
+        SUM(op.quantity) as total_sold
+      FROM uvki_product p
+      JOIN uvki_product_description pd 
+        ON p.product_id = pd.product_id AND pd.language_id = 1
+      JOIN uvki_order_product op 
+        ON p.product_id = op.product_id
+      WHERE p.status = 1
+      GROUP BY p.product_id, p.price, p.image, pd.name
+      ORDER BY total_sold asc
+      LIMIT 10
+    `
+  ]);
+
+  // Clean response
+  const formatProduct = (p) => ({
+    product_id: p.product_id,
+    name: p.uvki_product_description?.[0]?.name,
+    price: p.price,
+    special_price: p.uvki_product_special?.[0]?.price ?? null,
+    image: p.image,
+  });
+
+  return {
+    bestsellers,                        
+    latest: latest.map(formatProduct),
+    special: special.map(formatProduct),
+  };
+};
+
+export const BourbonDataService = async () => {
+
+  const [productsModule, titleModule] = await Promise.all([
+    prisma.uvki_journal3_module.findFirst({
+      where: {
+        module_type: "products",
+        module_name: "New in Bourbon - Home Page"
+      },
+      select: { module_data: true }
+    }),
+    prisma.uvki_journal3_module.findUnique({
+      where: { module_id: 163 },
+      select: { module_data: true }
+    })
+  ]);
+
+  const productsData = JSON.parse(productsModule.module_data);
+  const titleData = JSON.parse(titleModule.module_data);
+
+  
+  const productIds = productsData.items[0].filter.products.map(Number);
+
+  const products = await prisma.uvki_product.findMany({
+    where: {
+      product_id: { in: productIds },
+      status: true
+    },
+    select: {
+      product_id: true,
+      price: true,
+      image: true,
+      uvki_product_description: {
+        where: { language_id: 1 },
+        select: { name: true }
+      },
+      uvki_product_special: {
+        select: { price: true },
+        orderBy: { priority: "asc" },
+        take: 1
+      }
+    }
+  });
+
+  return {
+    title: titleData.general.title.lang_1,
+    description: titleData.general.subtitle.lang_1,
+    products: products.map((p) => ({
+      product_id: p.product_id,
+      name: p.uvki_product_description[0]?.name,
+      price: p.price,
+      special_price: p.uvki_product_special[0]?.price ?? null,
+      image: p.image,
+    }))
+  };
+};
