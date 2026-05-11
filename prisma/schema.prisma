@@ -215,7 +215,7 @@ model uvki_cart {
   date_added   DateTime @db.DateTime(0)
 
   uvki_product uvki_product? @relation(fields: [product_id], references: [product_id])
-  
+
   @@index([api_id, customer_id, session_id, product_id, recurring_id], map: "cart_id")
 }
 
@@ -229,6 +229,9 @@ model uvki_category {
   status        Boolean
   date_added    DateTime @db.DateTime(0)
   date_modified DateTime @db.DateTime(0)
+
+  uvki_category_description uvki_category_description[]
+  uvki_product_to_category  uvki_product_to_category[]
 
   @@index([parent_id], map: "parent_id")
 }
@@ -249,6 +252,8 @@ model uvki_category_description {
   meta_title       String @db.VarChar(255)
   meta_description String @db.VarChar(255)
   meta_keyword     String @db.VarChar(255)
+
+  uvki_category uvki_category? @relation(fields: [category_id], references: [category_id])
 
   @@id([category_id, language_id])
   @@index([name], map: "name")
@@ -1342,7 +1347,8 @@ model uvki_product {
   uvki_product_to_category uvki_product_to_category[]
   uvki_product_special     uvki_product_special[]
   uvki_customer_wishlist   uvki_customer_wishlist[]
-  uvki_cart                   uvki_cart[]
+  uvki_cart                uvki_cart[]
+
   @@index([product_id], map: "product_id")
   @@index([image], map: "square_image")
   @@index([status], map: "square_status")
@@ -1376,7 +1382,7 @@ model uvki_product_description {
   meta_keyword     String @db.VarChar(255)
 
   uvki_product uvki_product @relation(fields: [product_id], references: [product_id])
-  
+
   @@id([product_id, language_id])
   @@index([name], map: "name")
 }
@@ -1489,7 +1495,8 @@ model uvki_product_to_category {
   product_id  Int
   category_id Int
 
-  uvki_product uvki_product @relation(fields: [product_id], references: [product_id])
+  uvki_product  uvki_product  @relation(fields: [product_id], references: [product_id])
+  uvki_category uvki_category @relation(fields: [category_id], references: [category_id])
 
   @@id([product_id, category_id])
   @@index([category_id], map: "category_id")
@@ -2041,7 +2048,7 @@ model uvki_zone {
   code       String  @db.VarChar(32)
   status     Boolean @default(true)
 
-  uvki_address uvki_address []
+  uvki_address uvki_address[]
 }
 
 model uvki_zone_to_geo_zone {
