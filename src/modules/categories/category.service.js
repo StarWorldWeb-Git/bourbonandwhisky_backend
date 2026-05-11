@@ -1,4 +1,5 @@
 
+import { skip } from "@prisma/client/runtime/client";
 import { prisma } from "../../../lib/prisma.js";
 import { parsePositiveInt } from "../../utils/parsePostiveInt.js";
 
@@ -69,35 +70,64 @@ export const showLimitCategoriesServices = async (query) => {
 
   return result;
 };
+export const showProductByCategoriesIdService = async ( category_id, query = {}) => {
+  const DEFAULT_LIMIT = 10;
+  const MAX_LIMIT = 100;
 
-export const showProductByCategoriesIdService = async (category_id) => {
+  const parsePositiveInt = (value, defaultValue) => {
+    const parsed = parseInt(value, 10);
+    return Number.isNaN(parsed) || parsed <= 0 ? defaultValue : parsed;
+  };
+
+  const page = parsePositiveInt(query.page, 1);
+
+  const requestedLimit = parsePositiveInt(
+    query.limit,
+    DEFAULT_LIMIT
+  );
+
+  const limit = Math.min(requestedLimit, MAX_LIMIT);
+  const offset = (page - 1) * limit;
 
   const category = await prisma.uvki_category.findUnique({
-    where: { category_id: category_id },
+    where: {
+      category_id: category_id,
+    },
     select: {
       image: true,
+
       uvki_category_description: {
         where: { language_id: 1 },
-        select: { name: true },
+        select: {
+          name: true,
+        },
       },
+
       uvki_product_to_category: {
+        skip: offset,
+        take: limit,
+
         select: {
           uvki_product: {
             select: {
               product_id: true,
               price: true,
               image: true,
+
               uvki_product_description: {
                 where: { language_id: 1 },
-                select: { name: true },
+                select: {
+                  name: true,
+                },
               },
+
               uvki_product_special: {
                 select: {
                   price: true,
                   date_start: true,
-                  date_end: true
-                }
-              }
+                  date_end: true,
+                },
+              },
             },
           },
         },
@@ -106,29 +136,36 @@ export const showProductByCategoriesIdService = async (category_id) => {
   });
 
   if (!category) return null;
-  const data = {
-    image: category.image,
-    name: category.uvki_category_description[0]?.name,
-    products: category.uvki_product_to_category.map((p) => ({
-      product_id: p.uvki_product.product_id,
-      price: p.uvki_product.price,
-      image: p.uvki_product.image,
-      name: p.uvki_product.uvki_product_description[0]?.name,
-      spcial_price: p.uvki_product.uvki_product_special[0]?.price,
-      spcial_price_start_date: p.uvki_product.uvki_product_special[0]?.date_start,
-      spcial_price_end_date: p.uvki_product.uvki_product_special[0]?.date_end
-    })),
-    total: category.uvki_product_to_category.length,
-  };
 
-  return data;
+  const products = category.uvki_product_to_category.map((p) => ({
+    product_id: p.uvki_product.product_id,
+    price: p.uvki_product.price,
+    image: p.uvki_product.image,
+    name: p.uvki_product.uvki_product_description[0]?.name || null,
+
+    special_price:
+      p.uvki_product.uvki_product_special[0]?.price || null,
+
+    special_price_start_date:
+      p.uvki_product.uvki_product_special[0]?.date_start || null,
+
+    special_price_end_date:
+      p.uvki_product.uvki_product_special[0]?.date_end || null,
+  }));
+
+  return {
+    data: products,
+    total: products.length,
+    page,
+    limit,
+  };
 };
 
 export const getHomepageDataService = async () => {
-  
+
   const [categoriesModule, titleModule] = await Promise.all([
     prisma.uvki_journal3_module.findFirst({
-      where: { 
+      where: {
         module_type: "info_blocks",
         module_name: "Bourbon & Whisky Blocks"
       },

@@ -30,20 +30,27 @@ export const getProductByIdController = async (req, res) => {
   });
 }
 
-  export const MostViewedProductsController =  async (req, res) => {
-    
-   const result = await mostviewdproductservice();
-   res.json({
+export const MostViewedProductsController = async (req, res) => {
+
+  const result = await mostviewdproductservice();
+  res.json({
     success: true,
-    items: result,    
-   });
-  }
+    items: result,
+  });
+}
 
 
-  export const CountProductViewedController = async  (req, res) => {
-   const result = await countProductViewedService(req.params);
-   res.json({
+export const CountProductViewedController = async (req, res) => {
+  const result = await countProductViewedService(req.params);
+  res.json({
     success: true,
-    items: result,    
-   });
-  }
+    items: result,
+  });
+}
+
+
+
+// export const bestSellerProduct = async () => {
+
+//   const result  = await 
+// }
