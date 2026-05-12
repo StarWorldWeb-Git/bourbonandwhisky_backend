@@ -3,8 +3,9 @@ import { prisma } from "../../../lib/prisma.js";
 
 
 export const getCategoriMeta = async (req, res) => {
-    try {
-        const { id } = req.params;
+  try {
+    const { id } = req.params;
+    console.log("dssf",req.params)
     const meta = await prisma.uvki_category_description.findFirst({
       where: {
         category_id: parseInt(id),

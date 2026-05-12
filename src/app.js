@@ -52,7 +52,7 @@ export const createApp = () => {
 
   // meta api
   app.get("/api/v1/meta/product/:id",getProductMeta)
-  app.get("/api/v1/meta/categroy/:id",getCategoriMeta)
+  app.get("/api/v1/meta/category/:id",getCategoriMeta)
   app.get("/api/v1/meta/manufacture/:id",getManufactureMeta)
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);
