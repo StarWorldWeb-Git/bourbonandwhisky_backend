@@ -14,6 +14,9 @@ import wishlistRouter from "./modules/wishlish/wishlist.routes.js";
 import customerAddressRoutes from "./modules/customer Address/customerAddress.routes.js";
 import checkoutRouter from "./modules/checkout/checkout.routes.js";
 import CO_paymentRouter from "./modules/customer order payment/CO_payment.routes.js";
+import { getProductMeta } from "./modules/meta/product_meta.controller.js";
+import { getCategoriMeta } from "./modules/meta/category_meta.controller.js";
+import { getManufactureMeta } from "./modules/meta/manufacture_meta.controller.js";
 export const createApp = () => {
 
   const app = express();
@@ -44,6 +47,13 @@ export const createApp = () => {
   app.use("/api/v1/customer-address", customerAddressRoutes);
   app.use("/api/v1/checkout",checkoutRouter)
   app.use("/api/v1/payment",CO_paymentRouter)
+
+
+
+  // meta api
+  app.get("/api/v1/meta/product/:id",getProductMeta)
+  app.get("/api/v1/meta/categroy/:id",getCategoriMeta)
+  app.get("/api/v1/meta/manufacture/:id",getManufactureMeta)
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);
 
