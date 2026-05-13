@@ -235,3 +235,31 @@ export const getHomepageDataService = async () => {
     }),
   };
 };
+
+export const showGiftBasketsSerivce = async()=>{
+  const giftsbasketData = await prisma.uvki_category.findMany({
+    where:{
+     parent_id: 253
+    },
+    orderBy:{category_id:"desc"},
+     select:{
+      parent_id:true,
+      image:true,
+      category_id:true,
+      uvki_category_description:{
+         select:{
+          name:true
+         }
+      }
+     }
+  })
+
+  const formateData  =  giftsbasketData.map((g)=>({
+    name:g?.uvki_category_description?.[0]?.name,
+    image:g?.image,
+    category_id:g?.category_id,
+    parent_id:g?.parent_id
+  }));
+
+  return formateData ;
+}
