@@ -1348,6 +1348,7 @@ model uvki_product {
   uvki_product_special     uvki_product_special[]
   uvki_customer_wishlist   uvki_customer_wishlist[]
   uvki_cart                uvki_cart[]
+  uvki_review              uvki_review[]
 
   @@index([product_id], map: "product_id")
   @@index([image], map: "square_image")
@@ -1634,6 +1635,8 @@ model uvki_review {
   status        Boolean  @default(false)
   date_added    DateTime @db.DateTime(0)
   date_modified DateTime @db.DateTime(0)
+
+  uvki_product uvki_product @relation(fields: [product_id], references: [product_id])
 
   @@index([product_id], map: "product_id")
 }

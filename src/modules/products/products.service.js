@@ -186,6 +186,14 @@ export const getProductById = async (productId, languageId = 1) => {
           date_start: true,
           date_end: true,
         }
+      },
+      uvki_review: {
+        select: {
+          author: true,
+          text: true,
+          rating: true,
+          date_added: true
+        }
       }
     },
   });
@@ -227,6 +235,12 @@ export const getProductById = async (productId, languageId = 1) => {
     tag: desc?.tag ?? null,
     brandImg: product.uvki_manufacturer?.image ?? null,
     manufacturer_id: product.uvki_manufacturer?.manufacturer_id ?? null,
+    product_review: product?.uvki_review.map((p)=>({
+      author: p?.author,
+      text: p?.text,
+      rating: p?.rating,
+      date_added: p?.date_added
+    }))
   };
 };
 

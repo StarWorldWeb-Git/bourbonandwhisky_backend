@@ -73,3 +73,4 @@ export const writeReviewProduct = async (req, res) => {
   const result = await writereviewService(customer_id, req.body);
   return successResponse(res, 200, "Thank You For Your Review!", result)
 }
+
