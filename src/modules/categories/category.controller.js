@@ -1,6 +1,6 @@
 
 import { successResponse } from "../../utils/apiResponse.js";
-import { getHomepageDataService, listingCategoriesServices, showGiftBasketsSerivce, showLimitCategoriesServices, showProductByCategoriesIdService } from "./category.service.js";
+import { getHomepageDataService, listingCategoriesServices, showGiftBasketsSerivce, showGiftByBrandService, showLimitCategoriesServices, showProductByCategoriesIdService } from "./category.service.js";
 
 
 
@@ -32,4 +32,10 @@ export const showTopCategory = async (req, res) => {
 export const showGiftBasketsCategory = async (req,res) => {
 const result  =  await showGiftBasketsSerivce();
 return successResponse(res,200,"",result)
+}
+
+
+export const showGiftByCategroy = async(req,res)=>{
+    const result = await showGiftByBrandService();
+    return successResponse(res,200,"",result)
 }

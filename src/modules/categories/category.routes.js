@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { asyncHandler } from "../../utils/asyncHandler.js";
-import { listingCategoriesController, showGiftBasketsCategory, showLimitCategoriesController, showProductByCategoryId, showTopCategory } from "./category.controller.js";
+import { listingCategoriesController, showGiftBasketsCategory, showGiftByCategroy, showLimitCategoriesController, showProductByCategoryId, showTopCategory } from "./category.controller.js";
 
 
 
@@ -11,5 +11,6 @@ categoriesRouter.get("/gift-category", asyncHandler(showLimitCategoriesControlle
 categoriesRouter.get("/top-category",showTopCategory)
 categoriesRouter.get("/top-category",showTopCategory)
 categoriesRouter.get("/gifts-baskets-category",showGiftBasketsCategory)
+categoriesRouter.get("/gifts-by-category",showGiftByCategroy)
 categoriesRouter.get("/:id",asyncHandler(showProductByCategoryId))
 export default categoriesRouter;

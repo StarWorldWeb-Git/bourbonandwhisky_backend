@@ -236,30 +236,90 @@ export const getHomepageDataService = async () => {
   };
 };
 
-export const showGiftBasketsSerivce = async()=>{
+export const showGiftBasketsSerivce = async () => {
   const giftsbasketData = await prisma.uvki_category.findMany({
-    where:{
-     parent_id: 253
+    where: {
+      parent_id: 253
     },
-    orderBy:{category_id:"desc"},
-     select:{
-      parent_id:true,
-      image:true,
-      category_id:true,
-      uvki_category_description:{
-         select:{
-          name:true
-         }
+    orderBy: { category_id: "desc" },
+    select: {
+      parent_id: true,
+      image: true,
+      category_id: true,
+      uvki_category_description: {
+        select: {
+          name: true
+        }
       }
-     }
+    }
   })
 
-  const formateData  =  giftsbasketData.map((g)=>({
-    name:g?.uvki_category_description?.[0]?.name,
-    image:g?.image,
-    category_id:g?.category_id,
-    parent_id:g?.parent_id
+  const formateData = giftsbasketData.map((g) => ({
+    name: g?.uvki_category_description?.[0]?.name,
+    image: g?.image,
+    category_id: g?.category_id,
+    parent_id: g?.parent_id
   }));
 
-  return formateData ;
+  return formateData;
 }
+
+export const showGiftByBrandService = async () => {
+  const PARENT_IDS = [59, 166, 205, 257,303];
+  const CATEGORY_KEYS = ['burboncategory', 'scotchcategory', 'liquors_callection_categroy', 'occasions','Personalizes gifts'];
+
+  
+  const results = await prisma.uvki_category.findMany({
+    where: {
+      parent_id: { in: PARENT_IDS }
+    },
+    select: {
+      parent_id: true,
+      uvki_category_description: {
+        select: { name: true, category_id: true }
+      }
+    }
+  });
+
+  const parents = await prisma.uvki_category.findMany({
+    where: {
+      category_id: { in: PARENT_IDS }
+    },
+    select: {
+      category_id: true,
+      uvki_category_description: {
+        select: { name: true, category_id: true }
+      }
+    }
+  });
+  const parentNames = parents.reduce((acc, p) => {
+    acc[p.category_id] = p.uvki_category_description?.[0]?.name ?? null;
+    return acc;
+  }, {});
+
+  const grouped = PARENT_IDS.reduce((acc, id) => {
+    acc[id] = results.filter(r => r.parent_id === id);
+    return acc;
+  }, {});
+
+
+  const formattedData = PARENT_IDS.reduce((acc, id, index) => {
+    const key = CATEGORY_KEYS[index];
+
+    acc[key] = {
+      parent_id: id,
+      parent_name: parentNames[id],        
+      children: grouped[id].flatMap(d =>
+        d.uvki_category_description.map(desc => ({
+          parent_id: d.parent_id,
+          name: desc.name,
+          category_id: desc.category_id
+        }))
+      )
+    };
+
+    return acc;
+  }, {});
+
+  return formattedData;
+};
