@@ -265,10 +265,9 @@ export const showGiftBasketsSerivce = async () => {
 }
 
 export const showGiftByBrandService = async () => {
-  const PARENT_IDS = [59, 166, 205, 257,303];
-  const CATEGORY_KEYS = ['burboncategory', 'scotchcategory', 'liquors_callection_categroy', 'occasions','Personalizes gifts'];
+  const PARENT_IDS = [59, 166, 205, 257, 303];
+  const CATEGORY_KEYS = ['burboncategory', 'scotchcategory', 'liquors_callection_categroy', 'occasions', 'Personalizes gifts'];
 
-  
   const results = await prisma.uvki_category.findMany({
     where: {
       parent_id: { in: PARENT_IDS }
@@ -308,7 +307,7 @@ export const showGiftByBrandService = async () => {
 
     acc[key] = {
       parent_id: id,
-      parent_name: parentNames[id],        
+      parent_name: parentNames[id],
       children: grouped[id].flatMap(d =>
         d.uvki_category_description.map(desc => ({
           parent_id: d.parent_id,
@@ -320,6 +319,70 @@ export const showGiftByBrandService = async () => {
 
     return acc;
   }, {});
+
+  return formattedData;
+};
+
+
+
+export const getBestSellingGiftSetService = async () => {
+
+  const orderCounts = await prisma.uvki_order_product.groupBy({
+    by: ['product_id'],
+    _sum: { quantity: true },
+    orderBy: { _sum: { quantity: 'desc' } },
+    take: 20
+  });
+
+  const productIds = orderCounts.map(o => o.product_id);
+
+  const products = await prisma.uvki_product.findMany({
+    where: {
+      product_id: { in: productIds },
+      status: true,
+    },
+    select: {
+      product_id: true,
+      price: true,
+      image: true,
+      viewed: true,
+      uvki_product_description: {
+        where: { language_id: 1 },
+        select: { name: true }
+      },
+      uvki_product_special: {
+        select: {
+          price: true,
+          date_start: true,
+          date_end: true
+        },
+        orderBy: { priority: 'asc' },
+        take: 1
+      }
+    }
+  });
+
+  console.log("products", products)
+
+
+  const countMap = orderCounts.reduce((acc, o) => {
+    acc[o.product_id] = o._sum.quantity ?? 0;
+    return acc;
+  }, {});
+
+
+  const formattedData = products
+    .map(p => ({
+      product_id: p.product_id,
+      name: p.uvki_product_description?.[0]?.name ?? null,
+      price: p.price,
+      special_price: p.uvki_product_special?.[0]?.price ?? null,
+      image: p.image,
+      viewed: p.viewed,
+      total_ordered: countMap[p.product_id] ?? 0
+    }))
+    .sort((a, b) => a.total_ordered - b.total_ordered)
+    .slice(0, 10);
 
   return formattedData;
 };

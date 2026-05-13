@@ -1,6 +1,6 @@
 
 import { successResponse } from "../../utils/apiResponse.js";
-import { getHomepageDataService, listingCategoriesServices, showGiftBasketsSerivce, showGiftByBrandService, showLimitCategoriesServices, showProductByCategoriesIdService } from "./category.service.js";
+import { getBestSellingGiftSetService, getHomepageDataService, listingCategoriesServices, showGiftBasketsSerivce, showGiftByBrandService, showLimitCategoriesServices, showProductByCategoriesIdService } from "./category.service.js";
 
 
 
@@ -29,13 +29,19 @@ export const showTopCategory = async (req, res) => {
 
 }
 
-export const showGiftBasketsCategory = async (req,res) => {
-const result  =  await showGiftBasketsSerivce();
-return successResponse(res,200,"",result)
+export const showGiftBasketsCategory = async (req, res) => {
+    const result = await showGiftBasketsSerivce();
+    return successResponse(res, 200, "", result)
 }
 
 
-export const showGiftByCategroy = async(req,res)=>{
+export const showGiftByCategroy = async (req, res) => {
     const result = await showGiftByBrandService();
-    return successResponse(res,200,"",result)
+    return successResponse(res, 200, "", result)
+}
+
+export const besetSellingGiftset = async (req, res) => {
+
+    const result = await getBestSellingGiftSetService();
+    return successResponse(res, 200, "", result)
 }
