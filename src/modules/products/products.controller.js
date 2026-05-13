@@ -67,8 +67,9 @@ export const HomePageBanner = async (req, res) => {
   return successResponse(res, 200, "", result)
 }
 
-export const writeReviewProduct = async (req,res) => {
+export const writeReviewProduct = async (req, res) => {
 
-  const result = await writereviewService(req);
-  return successResponse(res,200,"Thank You For Your Review!",result)
+  const customer_id = req.customer.customer_id;
+  const result = await writereviewService(customer_id, req.body);
+  return successResponse(res, 200, "Thank You For Your Review!", result)
 }

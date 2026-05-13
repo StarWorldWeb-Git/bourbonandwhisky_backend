@@ -492,12 +492,19 @@ export const getBannersDataService = async () => {
   return { banners };
 };
 
-export const writereviewService = (req) => {
+export const writereviewService = async (customer_id, data) => {
+  const { product_id, author, text, rating } = data;
+  const reviewdata = await prisma.uvki_review.create({
+    data: {
+      customer_id: customer_id,
+      product_id: product_id,
+      author: author,
+      text: text,
+      rating: rating,
+      date_added: new Date(),
+      date_modified: new Date()
+    }
+  })
 
-  // const customer_id  =  req.current.customer_id;
-  // const {product_id,author,text,rating}  =  req.body;
-
-  // const data  =  await prisma.uvki_review.create({
-
-  // })
+  return reviewdata;
 }
