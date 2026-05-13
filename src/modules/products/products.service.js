@@ -176,7 +176,7 @@ export const getProductById = async (productId, languageId = 1) => {
         orderBy: { sort_order: "asc" },
       },
       uvki_manufacturer: {
-        select: { image: true,manufacturer_id:true },
+        select: { image: true, manufacturer_id: true },
       },
       uvki_product_special: {
         where: { customer_group_id: 1 },
@@ -335,7 +335,7 @@ export const getFeaturedProductsService = async () => {
     prisma.uvki_product.findMany({
       where: {
         status: true,
-        uvki_product_special: { some: {} }  
+        uvki_product_special: { some: {} }
       },
       take: 10,
       select: productSelect
@@ -371,7 +371,7 @@ export const getFeaturedProductsService = async () => {
   });
 
   return {
-    bestsellers,                        
+    bestsellers,
     latest: latest.map(formatProduct),
     special: special.map(formatProduct),
   };
@@ -396,7 +396,7 @@ export const BourbonDataService = async () => {
   const productsData = JSON.parse(productsModule.module_data);
   const titleData = JSON.parse(titleModule.module_data);
 
-  
+
   const productIds = productsData.items[0].filter.products.map(Number);
 
   const products = await prisma.uvki_product.findMany({
@@ -445,9 +445,9 @@ export const getSliderDataService = async () => {
   const data = JSON.parse(sliderModule.module_data);
 
   const slides = data.items
-    .filter((slide) => slide.status.status === "true") 
+    .filter((slide) => slide.status.status === "true")
     .map((slide) => {
-     
+
       const label = slide.items?.find((i) => i.name === "Label");
       const mainText = slide.items?.find((i) => i.name === "Main Text");
       const button = slide.items?.find((i) => i.name === "Button");
@@ -455,13 +455,13 @@ export const getSliderDataService = async () => {
       return {
         id: slide.id,
         name: slide.name,
-        image: slide.image?.lang_1,           
+        image: slide.image?.lang_1,
         alt: slide.alt?.lang_1,
-        label: label?.text?.lang_1,            
-        title: mainText?.text?.lang_1,         
-        button_text: button?.text?.lang_1,    
-        button_link_id: button?.link?.id,     
-        button_link_type: button?.link?.type,  
+        label: label?.text?.lang_1,
+        title: mainText?.text?.lang_1,
+        button_text: button?.text?.lang_1,
+        button_link_id: button?.link?.id,
+        button_link_type: button?.link?.type,
       };
     });
 
@@ -480,14 +480,24 @@ export const getBannersDataService = async () => {
   const data = JSON.parse(bannerModule.module_data);
 
   const banners = data.items
-    .filter((item) => item.status.status === "true") 
+    .filter((item) => item.status.status === "true")
     .map((item) => ({
       name: item.name,
       image: item.image?.lang_1,
       alt: item.alt?.lang_1,
-      link_type: item.link?.type,   
-      link_id: item.link?.id,       
+      link_type: item.link?.type,
+      link_id: item.link?.id,
     }));
 
   return { banners };
 };
+
+export const writereviewService = (req) => {
+
+  // const customer_id  =  req.current.customer_id;
+  // const {product_id,author,text,rating}  =  req.body;
+
+  // const data  =  await prisma.uvki_review.create({
+
+  // })
+}

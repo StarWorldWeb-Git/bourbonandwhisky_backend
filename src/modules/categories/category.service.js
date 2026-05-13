@@ -268,29 +268,33 @@ export const showGiftByBrandService = async () => {
   const PARENT_IDS = [59, 166, 205, 257, 303];
   const CATEGORY_KEYS = ['burboncategory', 'scotchcategory', 'liquors_callection_categroy', 'occasions', 'Personalizes gifts'];
 
-  const results = await prisma.uvki_category.findMany({
-    where: {
-      parent_id: { in: PARENT_IDS }
-    },
-    select: {
-      parent_id: true,
-      uvki_category_description: {
-        select: { name: true, category_id: true }
+  const [results, parents, productCategoriesRaw] = await Promise.all([
+    prisma.uvki_category.findMany({
+      where: { parent_id: { in: PARENT_IDS } },
+      select: {
+        parent_id: true,
+        uvki_category_description: {
+          select: { name: true, category_id: true }
+        }
       }
-    }
-  });
+    }),
 
-  const parents = await prisma.uvki_category.findMany({
-    where: {
-      category_id: { in: PARENT_IDS }
-    },
-    select: {
-      category_id: true,
-      uvki_category_description: {
-        select: { name: true, category_id: true }
+    prisma.uvki_category.findMany({
+      where: { category_id: { in: PARENT_IDS } },
+      select: {
+        category_id: true,
+        uvki_category_description: {
+          select: { name: true, category_id: true }
+        }
       }
-    }
-  });
+    }),
+
+    prisma.$queryRaw`SELECT DISTINCT category_id FROM uvki_product_to_category`
+  ]);
+
+  const validCategoryIds = new Set(productCategoriesRaw.map(pc => pc.category_id));
+
+
   const parentNames = parents.reduce((acc, p) => {
     acc[p.category_id] = p.uvki_category_description?.[0]?.name ?? null;
     return acc;
@@ -301,7 +305,6 @@ export const showGiftByBrandService = async () => {
     return acc;
   }, {});
 
-
   const formattedData = PARENT_IDS.reduce((acc, id, index) => {
     const key = CATEGORY_KEYS[index];
 
@@ -309,11 +312,13 @@ export const showGiftByBrandService = async () => {
       parent_id: id,
       parent_name: parentNames[id],
       children: grouped[id].flatMap(d =>
-        d.uvki_category_description.map(desc => ({
-          parent_id: d.parent_id,
-          name: desc.name,
-          category_id: desc.category_id
-        }))
+        d.uvki_category_description
+          .filter(desc => validCategoryIds.has(desc.category_id))
+          .map(desc => ({
+            parent_id: d.parent_id,
+            name: desc.name,
+            category_id: desc.category_id
+          }))
       )
     };
 
@@ -322,7 +327,6 @@ export const showGiftByBrandService = async () => {
 
   return formattedData;
 };
-
 
 
 export const getBestSellingGiftSetService = async () => {
