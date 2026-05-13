@@ -176,7 +176,7 @@ export const getProductById = async (productId, languageId = 1) => {
         orderBy: { sort_order: "asc" },
       },
       uvki_manufacturer: {
-        select: { image: true },
+        select: { image: true,manufacturer_id:true },
       },
       uvki_product_special: {
         where: { customer_group_id: 1 },
@@ -226,6 +226,7 @@ export const getProductById = async (productId, languageId = 1) => {
     meta_keyword: desc?.meta_keyword ?? null,
     tag: desc?.tag ?? null,
     brandImg: product.uvki_manufacturer?.image ?? null,
+    manufacturer_id: product.uvki_manufacturer?.manufacturer_id ?? null,
   };
 };
 
