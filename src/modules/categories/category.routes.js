@@ -13,5 +13,5 @@ categoriesRouter.get("/top-category",showTopCategory)
 categoriesRouter.get("/gifts-baskets-category",showGiftBasketsCategory)
 categoriesRouter.get("/gifts-by-category",showGiftByCategroy)
 categoriesRouter.get("/best-selling-giftset",besetSellingGiftset)
-categoriesRouter.get("/:id",asyncHandler(showProductByCategoryId))
+categoriesRouter.get("/:identifier",asyncHandler(showProductByCategoryId))
 export default categoriesRouter;

@@ -1,8 +1,8 @@
 
+import { prisma } from "../../../lib/prisma.js";
 import { successResponse } from "../../utils/apiResponse.js";
+import { HttpError } from "../../utils/httpError.js";
 import { getBestSellingGiftSetService, getHomepageDataService, listingCategoriesServices, showGiftBasketsSerivce, showGiftByBrandService, showLimitCategoriesServices, showProductByCategoriesIdService } from "./category.service.js";
-
-
 
 export const listingCategoriesController = async (req, res) => {
     const result = await listingCategoriesServices(req.query);
@@ -15,9 +15,31 @@ export const showLimitCategoriesController = async (req, res) => {
 };
 
 export const showProductByCategoryId = async (req, res) => {
+    const { identifier } = req.params;
+    const languageId = Number.parseInt(req.query.language_id, 10) || 1;
 
-    const category_id = parseInt(req.params.id)
-    const products = await showProductByCategoriesIdService(category_id);
+    let categoryId = null;
+    const isNumeric = /^\d+$/.test(identifier);
+
+    if (isNumeric) {
+        categoryId = parseInt(identifier);
+    } else {
+        const seoUrl = await prisma.uvki_seo_url.findFirst({
+            where: {
+                keyword: identifier,
+                store_id: 0,
+                language_id: languageId,
+            }
+        });
+
+        if (seoUrl?.query?.startsWith('category_id=')) {
+            categoryId = parseInt(seoUrl.query.split('category_id=')[1]);
+        }
+    }
+
+    if (!categoryId) throw new HttpError(404, "Category not found");
+
+    const products = await showProductByCategoriesIdService(categoryId, req.query);
 
     return successResponse(res, 200, "", products)
 }

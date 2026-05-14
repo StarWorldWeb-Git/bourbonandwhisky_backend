@@ -23,8 +23,73 @@ export const listProducts = async (query) => {
   const skip = (page - 1) * limit;
   const searchText = (query.q ?? "").toString().trim();
   const languageId = parsePositiveInt(query.language_id, 1);
-  const categoryId = parsePositiveInt(query.category_id, 0);
-  const manufacturerId = parsePositiveInt(query.manufacturer_id, 0);
+  
+  let categoryId = parsePositiveInt(query.category_id, 0);
+  let manufacturerId = parsePositiveInt(query.manufacturer_id, 0);
+  let productId = parsePositiveInt(query.product_id, 0);
+
+  // Resolve category slug if category_id is a slug
+  if (query.category_id && categoryId === 0) {
+    const seoUrl = await prisma.uvki_seo_url.findFirst({
+      where: {
+        keyword: query.category_id,
+        store_id: 0,
+        language_id: languageId,
+      }
+    });
+    if (seoUrl?.query?.startsWith('category_id=')) {
+      categoryId = parseInt(seoUrl.query.split('category_id=')[1]);
+    }
+  }
+
+  // Resolve manufacturer slug if manufacturer_id is a slug
+  if (query.manufacturer_id && manufacturerId === 0) {
+    const seoUrl = await prisma.uvki_seo_url.findFirst({
+      where: {
+        keyword: query.manufacturer_id,
+        store_id: 0,
+        language_id: languageId,
+      }
+    });
+    if (seoUrl?.query?.startsWith('manufacturer_id=')) {
+      manufacturerId = parseInt(seoUrl.query.split('manufacturer_id=')[1]);
+    }
+  }
+
+  // Resolve product slug if product_id is a slug
+  if (query.product_id && productId === 0) {
+    const seoUrl = await prisma.uvki_seo_url.findFirst({
+      where: {
+        keyword: query.product_id,
+        store_id: 0,
+        language_id: languageId,
+      }
+    });
+    if (seoUrl?.query?.startsWith('product_id=')) {
+      productId = parseInt(seoUrl.query.split('product_id=')[1]);
+    }
+  }
+
+  // Generic slug resolution if provided
+  if (query.slug) {
+    const seoUrl = await prisma.uvki_seo_url.findFirst({
+      where: {
+        keyword: query.slug,
+        store_id: 0,
+        language_id: languageId,
+      }
+    });
+    if (seoUrl) {
+      if (seoUrl.query.startsWith('category_id=')) {
+        categoryId = parseInt(seoUrl.query.split('category_id=')[1]);
+      } else if (seoUrl.query.startsWith('manufacturer_id=')) {
+        manufacturerId = parseInt(seoUrl.query.split('manufacturer_id=')[1]);
+      } else if (seoUrl.query.startsWith('product_id=')) {
+        productId = parseInt(seoUrl.query.split('product_id=')[1]);
+      }
+    }
+  }
+
   const minPrice = (query.min_price !== undefined && query.min_price !== "") ? parseFloat(query.min_price) : NaN;
   const maxPrice = (query.max_price !== undefined && query.max_price !== "") ? parseFloat(query.max_price) : NaN;
   const exactPrice = (query.price !== undefined && query.price !== "") ? parseFloat(query.price) : NaN;
@@ -71,6 +136,9 @@ export const listProducts = async (query) => {
       } : {},
       manufacturerId > 0 ? {
         manufacturer_id: manufacturerId
+      } : {},
+      productId > 0 ? {
+        product_id: productId
       } : {},
       hasPriceFilter ? { price: pricefilter } : {},
       availability === "in_stock" ? { quantity: { gt: 0 } } : availability === "out_of_stock" ? { quantity: 0 } : {},
@@ -130,14 +198,33 @@ export const listProducts = async (query) => {
     return startOk && endOk;
   };
 
+  const productIds = items.map(p => `product_id=${p.product_id}`);
+  const seoUrls = await prisma.uvki_seo_url.findMany({
+    where: {
+      query: { in: productIds },
+      store_id: 0,
+      language_id: languageId,
+    },
+    select: {
+      query: true,
+      keyword: true,
+    }
+  });
+  const slugMap = {};
+  seoUrls.forEach(s => {
+    const id = s.query.split('product_id=')[1];
+    slugMap[id] = s.keyword;
+  });
+
+
   const flatItems = items.map(({ uvki_product_description, uvki_product_special, ...product }) => {
     const validSpecial = uvki_product_special.find(isValidSpecial);
-
     return {
       ...product,
       name: uvki_product_description[0]?.name ?? null,
       original_price: product.price,
       special_price: validSpecial?.price ?? null,
+      slug: slugMap[product.product_id] ?? null,
     };
   });
 
@@ -200,6 +287,14 @@ export const getProductById = async (productId, languageId = 1) => {
 
   if (!product) return null;
 
+  const seoUrl = await prisma.uvki_seo_url.findFirst({
+    where: {
+      query: `product_id=${productId}`,
+      store_id: 0,
+      language_id: languageId,
+    },
+    select: { keyword: true }
+  });
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -240,7 +335,8 @@ export const getProductById = async (productId, languageId = 1) => {
       text: p?.text,
       rating: p?.rating,
       date_added: p?.date_added
-    }))
+    })),
+    slug: seoUrl?.keyword ?? null,
   };
 };
 
@@ -278,14 +374,30 @@ export const mostviewdproductservice = async () => {
       }
     },
   });
+
+  const productIds = result.map(p => `product_id=${p.product_id}`);
+  const seoUrls = await prisma.uvki_seo_url.findMany({
+    where: {
+      query: { in: productIds },
+      store_id: 0,
+      language_id: 1,
+    },
+    select: { query: true, keyword: true }
+  });
+  const slugMap = {};
+  seoUrls.forEach(s => {
+    const id = s.query.split('product_id=')[1];
+    slugMap[id] = s.keyword;
+  });
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const isValidSpecial = (special) => {
     const start = new Date(special.date_start);
     const end = new Date(special.date_end);
-
-
     const startOk = isNaN(start.getTime()) || start <= today;
     const endOk = isNaN(end.getTime()) || end >= today;
-
     return startOk && endOk;
   };
 
@@ -297,9 +409,9 @@ export const mostviewdproductservice = async () => {
       name: uvki_product_description[0]?.name ?? null,
       original_price: product.price,
       special_price: validSpecial?.price ?? null,
+      slug: slugMap[product.product_id] ?? null,
     };
   });
-
 
   return flatItems;
 }
@@ -335,7 +447,7 @@ export const getFeaturedProductsService = async () => {
     }
   };
 
-  const [latest, special, bestsellers] = await Promise.all([
+  const [latest, special, bestsellersResult] = await Promise.all([
 
     // ── Latest Products — date_added se ──
     prisma.uvki_product.findMany({
@@ -375,17 +487,40 @@ export const getFeaturedProductsService = async () => {
     `
   ]);
 
+  // Resolve slugs for all products
+  const allProductIds = [
+    ...latest.map(p => p.product_id),
+    ...special.map(p => p.product_id),
+    ...bestsellersResult.map(p => p.product_id)
+  ];
+
+  const seoUrls = await prisma.uvki_seo_url.findMany({
+    where: {
+      query: { in: allProductIds.map(id => `product_id=${id}`) },
+      store_id: 0,
+      language_id: 1,
+    },
+    select: { query: true, keyword: true }
+  });
+
+  const slugMap = {};
+  seoUrls.forEach(s => {
+    const id = s.query.split('product_id=')[1];
+    slugMap[id] = s.keyword;
+  });
+
   // Clean response
   const formatProduct = (p) => ({
     product_id: p.product_id,
-    name: p.uvki_product_description?.[0]?.name,
+    name: p.uvki_product_description?.[0]?.name || p.name,
     price: p.price,
     special_price: p.uvki_product_special?.[0]?.price ?? null,
     image: p.image,
+    slug: slugMap[p.product_id] ?? null,
   });
 
   return {
-    bestsellers,
+    bestsellers: bestsellersResult.map(formatProduct),
     latest: latest.map(formatProduct),
     special: special.map(formatProduct),
   };
@@ -434,6 +569,21 @@ export const BourbonDataService = async () => {
     }
   });
 
+  const seoUrls = await prisma.uvki_seo_url.findMany({
+    where: {
+      query: { in: productIds.map(id => `product_id=${id}`) },
+      store_id: 0,
+      language_id: 1,
+    },
+    select: { query: true, keyword: true }
+  });
+
+  const slugMap = {};
+  seoUrls.forEach(s => {
+    const id = s.query.split('product_id=')[1];
+    slugMap[id] = s.keyword;
+  });
+
   return {
     title: titleData.general.title.lang_1,
     description: titleData.general.subtitle.lang_1,
@@ -443,6 +593,7 @@ export const BourbonDataService = async () => {
       price: p.price,
       special_price: p.uvki_product_special[0]?.price ?? null,
       image: p.image,
+      slug: slugMap[p.product_id] ?? null,
     }))
   };
 };
@@ -458,13 +609,30 @@ export const getSliderDataService = async () => {
 
   const data = JSON.parse(sliderModule.module_data);
 
-  const slides = data.items
+  const slides = await Promise.all(data.items
     .filter((slide) => slide.status.status === "true")
-    .map((slide) => {
+    .map(async (slide) => {
 
       const label = slide.items?.find((i) => i.name === "Label");
       const mainText = slide.items?.find((i) => i.name === "Main Text");
       const button = slide.items?.find((i) => i.name === "Button");
+
+      let slug = null;
+      if (button?.link?.id && button?.link?.type) {
+        const queryMap = {
+          'product': `product_id=${button.link.id}`,
+          'category': `category_id=${button.link.id}`,
+          'manufacturer': `manufacturer_id=${button.link.id}`
+        };
+        const queryStr = queryMap[button.link.type];
+        if (queryStr) {
+          const seoUrl = await prisma.uvki_seo_url.findFirst({
+            where: { query: queryStr, store_id: 0, language_id: 1 },
+            select: { keyword: true }
+          });
+          slug = seoUrl?.keyword || null;
+        }
+      }
 
       return {
         id: slide.id,
@@ -476,8 +644,9 @@ export const getSliderDataService = async () => {
         button_text: button?.text?.lang_1,
         button_link_id: button?.link?.id,
         button_link_type: button?.link?.type,
+        slug
       };
-    });
+    }));
 
   return { slides };
 };
@@ -493,14 +662,34 @@ export const getBannersDataService = async () => {
 
   const data = JSON.parse(bannerModule.module_data);
 
-  const banners = data.items
+  const banners = await Promise.all(data.items
     .filter((item) => item.status.status === "true")
-    .map((item) => ({
-      name: item.name,
-      image: item.image?.lang_1,
-      alt: item.alt?.lang_1,
-      link_type: item.link?.type,
-      link_id: item.link?.id,
+    .map(async (item) => {
+      let slug = null;
+      if (item.link?.id && item.link?.type) {
+        const queryMap = {
+          'product': `product_id=${item.link.id}`,
+          'category': `category_id=${item.link.id}`,
+          'manufacturer': `manufacturer_id=${item.link.id}`
+        };
+        const queryStr = queryMap[item.link.type];
+        if (queryStr) {
+          const seoUrl = await prisma.uvki_seo_url.findFirst({
+            where: { query: queryStr, store_id: 0, language_id: 1 },
+            select: { keyword: true }
+          });
+          slug = seoUrl?.keyword || null;
+        }
+      }
+
+      return {
+        name: item.name,
+        image: item.image?.lang_1,
+        alt: item.alt?.lang_1,
+        link_type: item.link?.type,
+        link_id: item.link?.id,
+        slug
+      };
     }));
 
   return { banners };
@@ -560,6 +749,22 @@ export const searchAllProductService = async (query) => {
     }
   })
 
+  const productIds = searchData.map(p => `product_id=${p.product_id}`);
+  const seoUrls = await prisma.uvki_seo_url.findMany({
+    where: {
+      query: { in: productIds },
+      store_id: 0,
+      language_id: 1,
+    },
+    select: { query: true, keyword: true }
+  });
+
+  const slugMap = {};
+  seoUrls.forEach(s => {
+    const id = s.query.split('product_id=')[1];
+    slugMap[id] = s.keyword;
+  });
+
   const formatedData = searchData.map((s) => ({
     product_id: s?.product_id,
     model: s?.model,
@@ -569,7 +774,8 @@ export const searchAllProductService = async (query) => {
     image: s?.image,
     name: s?.uvki_product_description?.[0]?.name,
     special_price: s?.uvki_product_special?.[0]?.price ?? null,
-
+    slug: slugMap[s.product_id] ?? null,
   }))
   return formatedData;
 }
+

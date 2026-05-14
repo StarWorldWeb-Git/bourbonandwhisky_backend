@@ -3,12 +3,34 @@ import { prisma } from "../../../lib/prisma.js";
 
 export const getProductMeta = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { identifier } = req.params;
+    const languageId = 1;
+
+    let productId = null;
+    const isNumeric = /^\d+$/.test(identifier);
+
+    if (isNumeric) {
+      productId = parseInt(identifier);
+    } else {
+      const seoUrl = await prisma.uvki_seo_url.findFirst({
+        where: {
+          keyword: identifier,
+          store_id: 0,
+          language_id: languageId,
+        }
+      });
+
+      if (seoUrl?.query?.startsWith('product_id=')) {
+        productId = parseInt(seoUrl.query.split('product_id=')[1]);
+      }
+    }
+
+    if (!productId) return res.status(404).json({ message: 'Product not found' });
 
     const meta = await prisma.uvki_product_description.findFirst({
       where: {
-        product_id: parseInt(id),
-        language_id: 1,
+        product_id: productId,
+        language_id: languageId,
       },
       select: {
         meta_title: true,

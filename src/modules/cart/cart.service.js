@@ -92,6 +92,21 @@ export const getCartService = async (query, { sessionId = '', customerId = 0 }) 
     prisma.uvki_cart.count({ where })
   ])
 
+  const productIds = cartItems.map(item => `product_id=${item.product_id}`);
+  const seoUrls = await prisma.uvki_seo_url.findMany({
+    where: {
+      query: { in: productIds },
+      store_id: 0,
+      language_id: 1,
+    },
+    select: { query: true, keyword: true }
+  });
+
+  const slugMap = {};
+  seoUrls.forEach(s => {
+    const id = s.query.split('product_id=')[1];
+    slugMap[id] = s.keyword;
+  });
 
   const cartItemsFormatted = cartItems.map((item) => ({
     cart_id: item.cart_id,
@@ -112,6 +127,7 @@ export const getCartService = async (query, { sessionId = '', customerId = 0 }) 
         model: item.uvki_product.model,
         stock: item.uvki_product.quantity,
         status: item.uvki_product.status,
+        slug: slugMap[item.product_id] ?? null,
       }
       : null,
   }));

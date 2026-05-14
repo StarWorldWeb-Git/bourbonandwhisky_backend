@@ -12,24 +12,54 @@ export const listProductsController = async (req, res) => {
 }
 
 export const getProductByIdController = async (req, res) => {
-  const productId = parseProductId(req.params.id);
+  const { identifier } = req.params;
   const languageId = Number.parseInt(req.query.language_id, 10) || 1;
-  if (productId === 0) {
-    throw new HttpError(400, "Invalid product id");
+
+  const isNumeric = /^\d+$/.test(identifier);
+
+  if (isNumeric) {
+    const productId = parseProductId(identifier);
+    if (productId === 0) throw new HttpError(400, "Invalid product id");
+    const product = await getProductById(productId, languageId);
+    if (!product) throw new HttpError(404, "Product not found");
+    return res.json({ success: true, item: product });
+  } else {
+    // Resolve slug from uvki_seo_url
+    const seoUrl = await prisma.uvki_seo_url.findFirst({
+      where: {
+        keyword: identifier,
+        store_id: 0,
+        language_id: languageId,
+      }
+    });
+
+    if (!seoUrl) {
+      throw new HttpError(404, "Not found");
+    }
+
+    if (seoUrl.query.startsWith('product_id=')) {
+      const productId = parseInt(seoUrl.query.split('product_id=')[1]);
+      const product = await getProductById(productId, languageId);
+      if (!product) throw new HttpError(404, "Product not found");
+      return res.json({ success: true, item: product });
+    }
+
+    // If it's a category or manufacturer slug, return a filtered list
+    if (seoUrl.query.startsWith('category_id=')) {
+      const categoryId = parseInt(seoUrl.query.split('category_id=')[1]);
+      const result = await listProducts({ ...req.query, category_id: categoryId });
+      return res.json({ success: true, ...result });
+    }
+
+    if (seoUrl.query.startsWith('manufacturer_id=')) {
+      const manufacturerId = parseInt(seoUrl.query.split('manufacturer_id=')[1]);
+      const result = await listProducts({ ...req.query, manufacturer_id: manufacturerId });
+      return res.json({ success: true, ...result });
+    }
   }
 
-  const product = await getProductById(productId, languageId);
-  if (!product) {
-    throw new HttpError(404, "Product not found");
-  }
-
-
-
-  res.json({
-    success: true,
-    item: product,
-  });
-}
+  throw new HttpError(404, "Not found");
+};
 
 export const MostViewedProductsController = async (req, res) => {
 
@@ -76,5 +106,7 @@ export const writeReviewProduct = async (req, res) => {
 
 export const searchAllProduct = async (req, res) => {
   const result = await searchAllProductService(req.query);
-  return successResponse(res,200,"",result)
+  return successResponse(res, 200, "", result)
 }
+
+

@@ -74,6 +74,22 @@ export const getWishlistService = async (query,{ customerId, LANGUAGE_ID = 1 }) 
     }),
   ])
 
+  const productIds = items.map(item => `product_id=${item.product_id}`);
+  const seoUrls = await prisma.uvki_seo_url.findMany({
+    where: {
+      query: { in: productIds },
+      store_id: 0,
+      language_id: 1,
+    },
+    select: { query: true, keyword: true }
+  });
+
+  const slugMap = {};
+  seoUrls.forEach(s => {
+    const id = s.query.split('product_id=')[1];
+    slugMap[id] = s.keyword;
+  });
+
   const formattedItems = items.map(item => ({
     product_id: item.product_id,
     date_added: item.date_added,
@@ -83,6 +99,7 @@ export const getWishlistService = async (query,{ customerId, LANGUAGE_ID = 1 }) 
     image: item.uvki_product?.image ?? null,
     status: item.uvki_product?.status ?? null,
     in_stock: (item.uvki_product?.quantity ?? 0) > 0,
+    slug: slugMap[item.product_id] ?? null,
   }));
 
 
