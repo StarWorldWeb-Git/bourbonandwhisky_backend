@@ -1,7 +1,7 @@
 import { prisma } from "../../../lib/prisma.js";
 import { successResponse } from "../../utils/apiResponse.js";
 import { HttpError } from "../../utils/httpError.js";
-import { BourbonDataService, countProductViewedService, getBannersDataService, getFeaturedProductsService, getProductById, getSliderDataService, listProducts, mostviewdproductservice, parseProductId, writereviewService } from "./products.service.js";
+import { BourbonDataService, countProductViewedService, getBannersDataService, getFeaturedProductsService, getProductById, getSliderDataService, listProducts, mostviewdproductservice, parseProductId, searchAllProductService, writereviewService } from "./products.service.js";
 
 export const listProductsController = async (req, res) => {
   const result = await listProducts(req.query);
@@ -74,3 +74,7 @@ export const writeReviewProduct = async (req, res) => {
   return successResponse(res, 200, "Thank You For Your Review!", result)
 }
 
+export const searchAllProduct = async (req, res) => {
+  const result = await searchAllProductService(req.query);
+  return successResponse(res,200,"",result)
+}

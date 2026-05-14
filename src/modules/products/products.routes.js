@@ -8,6 +8,7 @@ import {
   HomePageSlider,
   listProductsController,
   MostViewedProductsController,
+  searchAllProduct,
   writeReviewProduct,
 } from "./products.controller.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
@@ -21,6 +22,7 @@ productsRouter.get("/best-letest-special",asyncHandler(bestSellerProduct))
 productsRouter.get("/top-bourbon-products",asyncHandler(BourbonData))
 productsRouter.get("/home-page-slider",asyncHandler(HomePageSlider))
 productsRouter.get("/home-page-banner",asyncHandler(HomePageBanner))
+productsRouter.get("/search", asyncHandler(searchAllProduct));
 productsRouter.post("/product-review",authMiddleware ,asyncHandler(writeReviewProduct))
 productsRouter.get("/:id", asyncHandler(getProductByIdController));
 productsRouter.put("/:id/count-viewed", asyncHandler(CountProductViewedController));

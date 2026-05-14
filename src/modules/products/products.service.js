@@ -235,7 +235,7 @@ export const getProductById = async (productId, languageId = 1) => {
     tag: desc?.tag ?? null,
     brandImg: product.uvki_manufacturer?.image ?? null,
     manufacturer_id: product.uvki_manufacturer?.manufacturer_id ?? null,
-    product_review: product?.uvki_review.map((p)=>({
+    product_review: product?.uvki_review.map((p) => ({
       author: p?.author,
       text: p?.text,
       rating: p?.rating,
@@ -521,4 +521,55 @@ export const writereviewService = async (customer_id, data) => {
   })
 
   return reviewdata;
+}
+
+export const searchAllProductService = async (query) => {
+
+  const searchText = (query.data).toString().trim();
+  const where = {
+    OR: [
+      { model: { contains: searchText } },
+      { sku: { contains: searchText } },
+      { upc: { contains: searchText } },
+      { uvki_product_description: { some: { name: { contains: searchText }, language_id: 1 } } }
+    ],
+  }
+
+
+  const searchData = await prisma.uvki_product.findMany({
+    where: where,
+    select: {
+      product_id: true,
+      model: true,
+      sku: true,
+      price: true,
+      status: true,
+      image: true,
+      uvki_product_description: {
+        select: {
+          name: true,
+        }
+      },
+      uvki_product_special: {
+        select: {
+          price: true,
+          date_start: true,
+          date_end: true,
+        }
+      }
+    }
+  })
+
+  const formatedData = searchData.map((s) => ({
+    product_id: s?.product_id,
+    model: s?.model,
+    sku: s?.sku,
+    price: s?.price,
+    status: s?.status,
+    image: s?.image,
+    name: s?.uvki_product_description?.[0]?.name,
+    special_price: s?.uvki_product_special?.[0]?.price ?? null,
+
+  }))
+  return formatedData;
 }
