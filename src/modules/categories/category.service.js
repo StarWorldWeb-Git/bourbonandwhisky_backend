@@ -366,7 +366,6 @@ export const getBestSellingGiftSetService = async () => {
     }
   });
 
-  console.log("products", products)
 
 
   const countMap = orderCounts.reduce((acc, o) => {
