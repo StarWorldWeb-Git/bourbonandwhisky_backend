@@ -719,18 +719,20 @@ export const writereviewService = async (customer_id, data) => {
 
 export const searchAllProductService = async (query) => {
   const searchText = (query.data).toString().trim();
+  const searchInt = parseInt(searchText);
   const page = parseInt(query.page) || 1;
   const limit = parseInt(query.limit) || 10;
   const skip = (page - 1) * limit;
 
   const where = {
-    OR: [
-      { model: { contains: searchText } },
-      { sku: { contains: searchText } },
-      { upc: { contains: searchText } },
-      { uvki_product_description: { some: { name: { contains: searchText }, language_id: 1 } } }
-    ],
-  };
+  OR: [
+    { model: { contains: searchText } },
+    { sku: { contains: searchText } },
+    { upc: { contains: searchText } },
+    ...(!isNaN(searchInt) ? [{ product_id: { equals: searchInt } }] : []),
+    { uvki_product_description: { some: { name: { contains: searchText }, language_id: 1 } } }
+  ],
+};
 
   const [totalItems, searchData] = await Promise.all([
     prisma.uvki_product.count({ where }),
