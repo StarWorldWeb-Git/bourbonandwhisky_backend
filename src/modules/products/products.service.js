@@ -23,7 +23,7 @@ export const listProducts = async (query) => {
   const skip = (page - 1) * limit;
   const searchText = (query.q ?? "").toString().trim();
   const languageId = parsePositiveInt(query.language_id, 1);
-  
+
   let categoryId = parsePositiveInt(query.category_id, 0);
   let manufacturerId = parsePositiveInt(query.manufacturer_id, 0);
   let productId = parsePositiveInt(query.product_id, 0);
@@ -718,8 +718,11 @@ export const writereviewService = async (customer_id, data) => {
 }
 
 export const searchAllProductService = async (query) => {
-
   const searchText = (query.data).toString().trim();
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 10;
+  const skip = (page - 1) * limit;
+
   const where = {
     OR: [
       { model: { contains: searchText } },
@@ -727,32 +730,34 @@ export const searchAllProductService = async (query) => {
       { upc: { contains: searchText } },
       { uvki_product_description: { some: { name: { contains: searchText }, language_id: 1 } } }
     ],
-  }
+  };
 
-
-  const searchData = await prisma.uvki_product.findMany({
-    where: where,
-    select: {
-      product_id: true,
-      model: true,
-      sku: true,
-      price: true,
-      status: true,
-      image: true,
-      uvki_product_description: {
-        select: {
-          name: true,
-        }
+  const [totalItems, searchData] = await Promise.all([
+    prisma.uvki_product.count({ where }),
+    prisma.uvki_product.findMany({
+      where,
+      skip,
+      take: limit,
+      select: {
+        product_id: true,
+        model: true,
+        sku: true,
+        price: true,
+        status: true,
+        image: true,
+        uvki_product_description: {
+          select: { name: true },
+        },
+        uvki_product_special: {
+          select: {
+            price: true,
+            date_start: true,
+            date_end: true,
+          },
+        },
       },
-      uvki_product_special: {
-        select: {
-          price: true,
-          date_start: true,
-          date_end: true,
-        }
-      }
-    }
-  })
+    }),
+  ]);
 
   const productIds = searchData.map(p => `product_id=${p.product_id}`);
   const seoUrls = await prisma.uvki_seo_url.findMany({
@@ -761,7 +766,7 @@ export const searchAllProductService = async (query) => {
       store_id: 0,
       language_id: 1,
     },
-    select: { query: true, keyword: true }
+    select: { query: true, keyword: true },
   });
 
   const slugMap = {};
@@ -780,7 +785,15 @@ export const searchAllProductService = async (query) => {
     name: s?.uvki_product_description?.[0]?.name,
     special_price: s?.uvki_product_special?.[0]?.price ?? null,
     slug: slugMap[s.product_id] ?? null,
-  }))
-  return formatedData;
-}
+  }));
 
+  return {
+    data: formatedData,
+    pagination: {
+      total_items: totalItems,
+      total_pages: Math.ceil(totalItems / limit),
+      current_page: page,
+      limit,
+    },
+  };
+};
