@@ -337,6 +337,14 @@ export const getProductById = async (productId, languageId = 1) => {
     },
     select: { keyword: true }
   });
+  const ManufactureSeoUrl = await prisma.uvki_seo_url.findFirst({
+    where: {
+      query: `manufacturer_id=${product.uvki_manufacturer?.manufacturer_id ?? null}`,
+      store_id: 0,
+      language_id: languageId,
+    },
+    select: { keyword: true }
+  });
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -379,6 +387,7 @@ export const getProductById = async (productId, languageId = 1) => {
       date_added: p?.date_added
     })),
     slug: seoUrl?.keyword ?? null,
+    img_slug:ManufactureSeoUrl?.keyword ?? null
   };
 };
 

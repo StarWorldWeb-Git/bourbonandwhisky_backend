@@ -177,5 +177,76 @@ export const showProductByManufacturerIdService = async (manufacturer_id, query 
         totalPages: Math.ceil(total / limit),
     };
 };
-   
+   export const getShopByBrandsService = async (moduleId, query) => {
+  const languageId = parsePositiveInt(query?.language_id, 1);
+
+  // Fetch module data from DB
+  const module = await prisma.uvki_journal3_module.findFirst({
+    where: { module_id: moduleId },
+    select: { module_data: true }
+  });
+
+  if (!module) throw new Error("Module not found");
+
+  const moduleData = JSON.parse(module.module_data);
+  const items = moduleData?.items ?? [];
+
+  // Extract manufacturer IDs
+  const manufacturerIds = items
+    .filter(item => item.type === "manufacturer" && item.status?.status === "true")
+    .map(item => parseInt(item.manufacturer));
+
+  if (manufacturerIds.length === 0) return [];
+
+  // Fetch manufacturers with images in parallel
+  const [manufacturers, seoUrls] = await Promise.all([
+    prisma.uvki_manufacturer.findMany({
+      where: { manufacturer_id: { in: manufacturerIds } },
+      select: {
+        manufacturer_id: true,
+        name: true,
+        image: true,
+      }
+    }),
+    prisma.uvki_seo_url.findMany({
+      where: {
+        query: { in: manufacturerIds.map(id => `manufacturer_id=${id}`) },
+        store_id: 0,
+        language_id: languageId,
+      },
+      select: { query: true, keyword: true }
+    })
+  ]);
+
+  // Build slug map
+  const slugMap = {};
+  seoUrls.forEach(s => {
+    const id = s.query.split('manufacturer_id=')[1];
+    slugMap[id] = s.keyword;
+  });
+
+  // Preserve order from module items
+  const manufacturerMap = {};
+  manufacturers.forEach(m => {
+    manufacturerMap[m.manufacturer_id] = m;
+  });
+
+  const result = items
+    .filter(item => item.type === "manufacturer" && item.status?.status === "true")
+    .map(item => {
+      const id = parseInt(item.manufacturer);
+      const m = manufacturerMap[id];
+      if (!m) return null;
+      return {
+        manufacturer_id: m.manufacturer_id,
+        name: m.name,
+        image: m.image ?? null,
+        slug: slugMap[id] ?? null,
+        limit: parseInt(item.limit) || 4,
+      };
+    })
+    .filter(Boolean);
+
+  return result;
+};
   

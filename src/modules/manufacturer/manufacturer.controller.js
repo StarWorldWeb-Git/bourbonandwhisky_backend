@@ -1,7 +1,7 @@
 import { prisma } from "../../../lib/prisma.js";
 import { successResponse } from "../../utils/apiResponse.js";
 import { HttpError } from "../../utils/httpError.js";
-import { lisdtingManufacturersService, listingAllManufacturersService, showProductByManufacturerIdService } from "./manufacturer.service.js"
+import { getShopByBrandsService, lisdtingManufacturersService, listingAllManufacturersService, showProductByManufacturerIdService } from "./manufacturer.service.js"
 
 export const lisdtingManufacturersController = async (req, res) => {
    const result = await lisdtingManufacturersService(req.query);
@@ -43,3 +43,13 @@ export const showProductByManufacturerId = async (req, res) => {
 
     return successResponse(res, 200, "", products)
 }
+
+export const getShopByBrands = async (req, res) => {
+  try {
+    const moduleId = 287; // Shop by Brands module_id
+    const data = await getShopByBrandsService(moduleId, req.query);
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
