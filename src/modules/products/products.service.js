@@ -234,6 +234,11 @@ export const listProducts = async (query) => {
     total,
     totalPages: Math.ceil(total / limit),
     items: flatItems,
+    resolvedIds: {
+      categoryId,
+      manufacturerId,
+      productId
+    }
   };
 
 }
