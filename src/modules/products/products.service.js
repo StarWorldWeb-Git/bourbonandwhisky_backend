@@ -28,7 +28,6 @@ export const listProducts = async (query) => {
   let manufacturerId = parsePositiveInt(query.manufacturer_id, 0);
   let productId = parsePositiveInt(query.product_id, 0);
 
-  // Resolve category slug if category_id is a slug
   if (query.category_id && categoryId === 0) {
     const seoUrl = await prisma.uvki_seo_url.findFirst({
       where: {
@@ -42,7 +41,7 @@ export const listProducts = async (query) => {
     }
   }
 
-  // Resolve manufacturer slug if manufacturer_id is a slug
+
   if (query.manufacturer_id && manufacturerId === 0) {
     const seoUrl = await prisma.uvki_seo_url.findFirst({
       where: {
@@ -56,7 +55,6 @@ export const listProducts = async (query) => {
     }
   }
 
-  // Resolve product slug if product_id is a slug
   if (query.product_id && productId === 0) {
     const seoUrl = await prisma.uvki_seo_url.findFirst({
       where: {
@@ -70,7 +68,6 @@ export const listProducts = async (query) => {
     }
   }
 
-  // Generic slug resolution if provided
   if (query.slug) {
     const seoUrl = await prisma.uvki_seo_url.findFirst({
       where: {
@@ -445,7 +442,7 @@ export const getFeaturedProductsService = async () => {
       where: { language_id: 1 },
       select: { name: true }
     },
-    uvki_product_special: {  // special price
+    uvki_product_special: {  
       select: { price: true },
       orderBy: { priority: "asc" },
       take: 1
@@ -454,7 +451,7 @@ export const getFeaturedProductsService = async () => {
 
   const [latest, special, bestsellersResult] = await Promise.all([
 
-    // ── Latest Products — date_added se ──
+   
     prisma.uvki_product.findMany({
       where: { status: true },
       orderBy: { date_added: "desc" },
@@ -462,7 +459,7 @@ export const getFeaturedProductsService = async () => {
       select: productSelect
     }),
 
-    // ── Special Deals — uvki_product_special table se ──
+    
     prisma.uvki_product.findMany({
       where: {
         status: true,
@@ -725,14 +722,14 @@ export const searchAllProductService = async (query) => {
   const skip = (page - 1) * limit;
 
   const where = {
-  OR: [
-    { model: { contains: searchText } },
-    { sku: { contains: searchText } },
-    { upc: { contains: searchText } },
-    ...(!isNaN(searchInt) ? [{ product_id: { equals: searchInt } }] : []),
-    { uvki_product_description: { some: { name: { contains: searchText }, language_id: 1 } } }
-  ],
-};
+    OR: [
+      { model: { contains: searchText } },
+      { sku: { contains: searchText } },
+      { upc: { contains: searchText } },
+      ...(!isNaN(searchInt) ? [{ product_id: { equals: searchInt } }] : []),
+      { uvki_product_description: { some: { name: { contains: searchText }, language_id: 1 } } }
+    ],
+  };
 
   const [totalItems, searchData] = await Promise.all([
     prisma.uvki_product.count({ where }),
