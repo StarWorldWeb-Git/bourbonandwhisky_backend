@@ -371,9 +371,19 @@ export const showGiftByBrandService = async () => {
     return acc;
   }, {});
 
-  const formattedData = await PARENT_IDS.reduce(async (accPromise, id, index) => {
+const formattedData = await PARENT_IDS.reduce(async (accPromise, id, index) => {
     const acc = await accPromise;
     const key = CATEGORY_KEYS[index];
+
+    // Fetch parent slug
+    const parentSeoUrl = await prisma.uvki_seo_url.findFirst({
+      where: {
+        query: `category_id=${id}`,
+        store_id: 0,
+        language_id: 1,
+      },
+      select: { keyword: true }
+    });
 
     const children = await Promise.all(grouped[id].flatMap(d =>
       d.uvki_category_description
@@ -391,7 +401,7 @@ export const showGiftByBrandService = async () => {
             parent_id: d.parent_id,
             name: desc.name,
             category_id: desc.category_id,
-            slug: seoUrl?.keyword || null
+            slug: seoUrl?.keyword ?? null
           };
         })
     ));
@@ -399,6 +409,7 @@ export const showGiftByBrandService = async () => {
     acc[key] = {
       parent_id: id,
       parent_name: parentNames[id],
+      slug: parentSeoUrl?.keyword ?? null, 
       children
     };
 

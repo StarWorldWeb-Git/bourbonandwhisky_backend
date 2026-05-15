@@ -1025,6 +1025,7 @@ model uvki_manufacturer {
   sort_order      Int
 
   uvki_product uvki_product[]
+  uvki_manufacturer_description  uvki_manufacturer_description[]
 }
 
 model uvki_manufacturer_description {
@@ -1035,6 +1036,8 @@ model uvki_manufacturer_description {
   meta_h1          String @db.VarChar(255)
   meta_description String @db.VarChar(255)
   meta_keyword     String @db.VarChar(255)
+   
+   uvki_manufacturer uvki_manufacturer @relation(fields: [manufacturer_id], references: [manufacturer_id])
 
   @@id([manufacturer_id, language_id])
 }

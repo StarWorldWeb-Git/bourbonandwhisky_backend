@@ -225,6 +225,44 @@ export const listProducts = async (query) => {
     };
   });
 
+  let categoryDetails = null;
+  if (categoryId > 0) {
+    const categoryDesc = await prisma.uvki_category_description.findFirst({
+      where: { category_id: categoryId, language_id: languageId },
+      select: { name: true, description: true }
+    });
+    if (categoryDesc) {
+      categoryDetails = {
+        name: categoryDesc.name,
+        description: decodeHtml(categoryDesc.description)
+      };
+    }
+  }
+
+  let manufacturerDetails = null;
+
+  if (manufacturerId > 0) {
+    const manufacturer = await prisma.uvki_manufacturer.findFirst({
+      where: { manufacturer_id: manufacturerId },
+      select: {
+        name: true,
+        uvki_manufacturer_description: {
+          select: {
+            description: true,
+          },
+        },
+      },
+    });
+
+    if (manufacturer) {
+      const descriptions = manufacturer.uvki_manufacturer_description?.map((m) => m?.description) ?? [];
+      manufacturerDetails = {
+        name: manufacturer.name,
+        description: decodeHtml(descriptions[0] ?? ""),
+      };
+    }
+  }
+
   return {
     page,
     limit,
@@ -235,7 +273,9 @@ export const listProducts = async (query) => {
       categoryId,
       manufacturerId,
       productId
-    }
+    },
+    categoryDetails,
+    manufacturerDetails
   };
 
 }
@@ -442,7 +482,7 @@ export const getFeaturedProductsService = async () => {
       where: { language_id: 1 },
       select: { name: true }
     },
-    uvki_product_special: {  
+    uvki_product_special: {
       select: { price: true },
       orderBy: { priority: "asc" },
       take: 1
@@ -451,7 +491,7 @@ export const getFeaturedProductsService = async () => {
 
   const [latest, special, bestsellersResult] = await Promise.all([
 
-   
+
     prisma.uvki_product.findMany({
       where: { status: true },
       orderBy: { date_added: "desc" },
@@ -459,7 +499,7 @@ export const getFeaturedProductsService = async () => {
       select: productSelect
     }),
 
-    
+
     prisma.uvki_product.findMany({
       where: {
         status: true,
