@@ -24,6 +24,7 @@ export const getAllPostsService = async ({ page = 1, limit = 10, } = {}) => {
                         name: true,
                         tags: true,
                         keyword: true,
+                        description:true
                     },
                 },
             },
@@ -45,7 +46,10 @@ export const getAllPostsService = async ({ page = 1, limit = 10, } = {}) => {
             date_updated: post.date_updated,
             title: desc.name ?? null,
             slug: desc.keyword ?? null,
-           
+            views: post?.views,
+            comments: post?.comments,
+            description:desc.description
+
         };
     });
 
@@ -86,7 +90,6 @@ export const getPostBySlugService = async (slug) => {
     });
 
     if (!post) return null;
-
     return {
         post_id: post.post_id,
         author_id: post.author_id,

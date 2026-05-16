@@ -18,6 +18,7 @@ import blogRoute from "./modules/blog/blog.routes.js";
 import { getProductMeta } from "./modules/meta/product_meta.controller.js";
 import { getCategoriMeta } from "./modules/meta/category_meta.controller.js";
 import { getManufactureMeta } from "./modules/meta/manufacture_meta.controller.js";
+import { getBlogMeta } from "./modules/meta/blog_meta.controller.js";
 export const createApp = () => {
 
   const app = express();
@@ -55,6 +56,7 @@ export const createApp = () => {
   app.get("/api/v1/meta/product/:identifier", getProductMeta)
   app.get("/api/v1/meta/category/:identifier", getCategoriMeta)
   app.get("/api/v1/meta/manufacturer/:identifier", getManufactureMeta)
+  app.get("/api/v1/meta/blog/:identifier", getBlogMeta)
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);
 
