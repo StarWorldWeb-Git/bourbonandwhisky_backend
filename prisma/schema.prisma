@@ -818,7 +818,7 @@ model uvki_journal3_blog_post {
   post_id      Int       @id @default(autoincrement())
   author_id    Int?
   image        String?   @db.VarChar(256)
-  comments     Boolean?
+  comments     Int?
   status       Boolean?
   sort_order   Int?
   date_created DateTime? @db.DateTime(0)
