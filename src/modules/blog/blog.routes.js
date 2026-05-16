@@ -8,8 +8,8 @@ import {
 
 const blogRoute = Router();
 
-blogRoute.get("/posts/:slug", getPostBySlug);
 blogRoute.get("/posts", getAllPosts);
 blogRoute.get("/search", searchByKeyword);
+blogRoute.get("/posts/:slug", getPostBySlug);
 
 export default blogRoute;

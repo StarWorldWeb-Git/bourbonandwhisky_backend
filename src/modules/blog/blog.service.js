@@ -22,12 +22,8 @@ export const getAllPostsService = async ({ page = 1, limit = 10, } = {}) => {
                     where: { language_id: 1 },
                     select: {
                         name: true,
-                        description: true,
                         tags: true,
                         keyword: true,
-                        meta_title: true,
-                        meta_keywords: true,
-                        meta_description: true,
                     },
                 },
             },
@@ -43,17 +39,13 @@ export const getAllPostsService = async ({ page = 1, limit = 10, } = {}) => {
             post_id: post.post_id,
             author_id: post.author_id,
             image: post.image,
-            comments: post.comments,
             status: post.status,
             sort_order: post.sort_order,
             date_created: post.date_created,
             date_updated: post.date_updated,
             title: desc.name ?? null,
-            content: desc.description ?? null,
             slug: desc.keyword ?? null,
-            meta_title: desc.meta_title ?? null,
-            meta_keywords: desc.meta_keywords ?? null,
-            meta_description: desc.meta_description ?? null,
+           
         };
     });
 
