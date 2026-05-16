@@ -1,7 +1,7 @@
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
-import cookieParser from  "cookie-parser"
+import cookieParser from "cookie-parser"
 import { errorMiddleware } from "./middlewares/error.middleware.js";
 import { notFoundMiddleware } from "./middlewares/notFound.middleware.js";
 import productsRouter from "./modules/products/products.routes.js";
@@ -14,6 +14,7 @@ import wishlistRouter from "./modules/wishlish/wishlist.routes.js";
 import customerAddressRoutes from "./modules/customer Address/customerAddress.routes.js";
 import checkoutRouter from "./modules/checkout/checkout.routes.js";
 import CO_paymentRouter from "./modules/customer order payment/CO_payment.routes.js";
+import blogRoute from "./modules/blog/blog.routes.js";
 import { getProductMeta } from "./modules/meta/product_meta.controller.js";
 import { getCategoriMeta } from "./modules/meta/category_meta.controller.js";
 import { getManufactureMeta } from "./modules/meta/manufacture_meta.controller.js";
@@ -24,7 +25,7 @@ export const createApp = () => {
   app.use(
     cors({
       origin: "http://localhost:3000",
-      credentials:true
+      credentials: true
     })
   );
 
@@ -32,28 +33,28 @@ export const createApp = () => {
   app.use(express.json());
   app.set('trust proxy', 1);
   app.use(helmet());
-  
+
   app.get("/health", (_req, res) => {
     res.json({ success: true, message: "API is healthy" });
   });
-  
+
   app.use("/api/v1/products", productsRouter);
   app.use("/api/v1/categories", categoriesRouter);
   app.use("/api/v1/manufacturer", manufacturerRouter);
   app.use("/api/v1/customer", customerRouter);
-  app.use("/api/v1/customer-order",orderRouter)
+  app.use("/api/v1/customer-order", orderRouter)
   app.use("/api/v1/cart", cartRouter);
   app.use("/api/v1/wishlist", wishlistRouter);
   app.use("/api/v1/customer-address", customerAddressRoutes);
-  app.use("/api/v1/checkout",checkoutRouter)
-  app.use("/api/v1/payment",CO_paymentRouter)
-
+  app.use("/api/v1/checkout", checkoutRouter)
+  app.use("/api/v1/payment", CO_paymentRouter)
+  app.use("/api/v1/blog", blogRoute)
 
 
   // meta api
-  app.get("/api/v1/meta/product/:identifier",getProductMeta)
-  app.get("/api/v1/meta/category/:identifier",getCategoriMeta)
-  app.get("/api/v1/meta/manufacturer/:identifier",getManufactureMeta)
+  app.get("/api/v1/meta/product/:identifier", getProductMeta)
+  app.get("/api/v1/meta/category/:identifier", getCategoriMeta)
+  app.get("/api/v1/meta/manufacturer/:identifier", getManufactureMeta)
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);
 

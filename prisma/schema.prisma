@@ -824,18 +824,22 @@ model uvki_journal3_blog_post {
   date_created DateTime? @db.DateTime(0)
   date_updated DateTime? @db.DateTime(0)
   views        Int?
+
+  uvki_journal3_blog_post_description uvki_journal3_blog_post_description[]
 }
 
 model uvki_journal3_blog_post_description {
-  post_id          Int
-  language_id      Int
-  name             String? @db.VarChar(256)
-  description      String? @db.MediumText
-  meta_title       String? @db.VarChar(256)
-  meta_keywords    String? @db.VarChar(256)
-  meta_description String? @db.Text
-  keyword          String? @db.VarChar(256)
-  tags             String? @db.VarChar(256)
+  post_id                        Int
+  language_id                    Int
+  name                           String?                  @db.VarChar(256)
+  description                    String?                  @db.MediumText
+  meta_title                     String?                  @db.VarChar(256)
+  meta_keywords                  String?                  @db.VarChar(256)
+  meta_description               String?                  @db.Text
+  keyword                        String?                  @db.VarChar(256)
+  tags                           String?                  @db.VarChar(256)
+  uvkiJournal3BlogPost           uvki_journal3_blog_post? @relation(fields: [post_id], references: [post_id])
+ 
 
   @@id([post_id, language_id])
 }
@@ -1024,8 +1028,8 @@ model uvki_manufacturer {
   image           String? @db.VarChar(255)
   sort_order      Int
 
-  uvki_product uvki_product[]
-  uvki_manufacturer_description  uvki_manufacturer_description[]
+  uvki_product                  uvki_product[]
+  uvki_manufacturer_description uvki_manufacturer_description[]
 }
 
 model uvki_manufacturer_description {
@@ -1036,8 +1040,8 @@ model uvki_manufacturer_description {
   meta_h1          String @db.VarChar(255)
   meta_description String @db.VarChar(255)
   meta_keyword     String @db.VarChar(255)
-   
-   uvki_manufacturer uvki_manufacturer @relation(fields: [manufacturer_id], references: [manufacturer_id])
+
+  uvki_manufacturer uvki_manufacturer @relation(fields: [manufacturer_id], references: [manufacturer_id])
 
   @@id([manufacturer_id, language_id])
 }
