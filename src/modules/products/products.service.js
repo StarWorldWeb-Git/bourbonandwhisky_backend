@@ -614,6 +614,7 @@ export const BourbonDataService = async () => {
       product_id: true,
       price: true,
       image: true,
+      quantity: true,
       uvki_product_description: {
         where: { language_id: 1 },
         select: { name: true }
@@ -651,6 +652,7 @@ export const BourbonDataService = async () => {
       special_price: p.uvki_product_special[0]?.price ?? null,
       image: p.image,
       slug: slugMap[p.product_id] ?? null,
+      quantity: p.quantity,
     }))
   };
 };
