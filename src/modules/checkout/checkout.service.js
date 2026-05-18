@@ -1,4 +1,6 @@
 import { prisma } from "../../../lib/prisma.js";
+import { transporter } from "../../config/nodemiller.js";
+import { generateOrderConfirmationEmail } from "../../utils/Orderconfirmationemail.js";
 import { ORDER_STATUS } from "../../utils/orderStatus.js";
 
 
@@ -239,7 +241,7 @@ export const placeOrderService = async (orderData) => {
         }
 
 
-        
+
         await tx.uvki_order_total.createMany({
             data: builtTotals.map((t) => ({
                 order_id,
@@ -293,6 +295,27 @@ export const placeOrderService = async (orderData) => {
         });
 
         return { order_id, total: grandTotal };
+    });
+
+    await transporter.sendMail({
+        from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM}>`,
+        to: email,
+        subject: `Order Confirmed #${result.order_id} — Bourbon & Whisky`,
+        html: generateOrderConfirmationEmail({
+            order_id: result.order_id,
+            firstname, lastname, email,
+            date_added: now,
+            products, totals: builtTotals,
+            shipping_firstname, shipping_lastname,
+            shipping_address_1, shipping_address_2,
+            shipping_city, shipping_zone,
+            shipping_postcode, shipping_country,
+            shipping_method,
+            payment_method, payment_firstname,
+            payment_lastname, payment_address_1,
+            payment_city, payment_zone,
+            payment_country,
+        }),
     });
 
     return result;

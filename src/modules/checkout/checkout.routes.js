@@ -6,7 +6,7 @@ import { placeOrder } from './checkout.controller.js';
 
 const checkoutRouter  =  Router()
 
-checkoutRouter.post("/", authMiddleware, asyncHandler(placeOrder));
+checkoutRouter.post("/", asyncHandler(placeOrder));
 
 export default checkoutRouter ;
 

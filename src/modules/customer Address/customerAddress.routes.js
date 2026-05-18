@@ -8,8 +8,8 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const customerAddressRoutes = Router();
 
-customerAddressRoutes.get('/countries',  authMiddleware, asyncHandler(getCountries));
-customerAddressRoutes.get('/zones/:countryId',  authMiddleware, asyncHandler(getZones));
+customerAddressRoutes.get('/countries', asyncHandler(getCountries));
+customerAddressRoutes.get('/zones/:countryId', asyncHandler(getZones));
 customerAddressRoutes.get('/',  authMiddleware, asyncHandler(getAddresses));
 customerAddressRoutes.post('/create-address', addressValidation,  authMiddleware, asyncHandler(createAddress));
 customerAddressRoutes.get('/:addressId',  authMiddleware, asyncHandler(getAddress));

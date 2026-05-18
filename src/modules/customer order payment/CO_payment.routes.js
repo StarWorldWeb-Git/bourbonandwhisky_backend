@@ -6,8 +6,8 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const CO_paymentRouter = Router()
 
-CO_paymentRouter.post("/webhook", express.raw({ type: "application/json" }), handleWebhook);
 
-CO_paymentRouter.post("/create-intent",authMiddleware, asyncHandler(createIntent));
+CO_paymentRouter.post("/webhook", express.raw({ type: "application/json" }), handleWebhook);
+CO_paymentRouter.post("/create-intent", asyncHandler(createIntent));
 
 export default CO_paymentRouter;
