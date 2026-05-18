@@ -6,7 +6,7 @@ import { accountInformationService, changePasswordService, forgotPasswordRequest
 export const socialLogin = async (req, res) => {
    
         const ip = req.ip || req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '0.0.0.0';
-        const { token, customer } = await socialLoginCustomer(req.body, ip);
+        const { token, customer } = await socialLoginCustomer(req.body, ip, req.cookies);
 
         res.cookie('token', token, {
             httpOnly: true,

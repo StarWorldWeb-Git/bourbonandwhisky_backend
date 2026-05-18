@@ -23,7 +23,7 @@ export const generateSalt = (length = 9) => {
 }
 
 
-export const socialLoginCustomer = async (data, ip) => {
+export const socialLoginCustomer = async (data, ip, cookies = {}) => {
   const { firstname, lastname, email, oauth_provider, oauth_id } = data;
   let customer = await prisma.uvki_customer.findFirst({
     where: { email: email.toLowerCase().trim() }
@@ -79,6 +79,28 @@ export const socialLoginCustomer = async (data, ip) => {
       date_added: new Date()
     }
   });
+
+  // Merge Guest Cart
+  const guestSessionId = cookies?.guest_session || '';
+  if (guestSessionId) {
+    await mergeGuestCartService({
+      sessionId: guestSessionId,
+      customerId: customer.customer_id,
+    });
+  }
+
+  // Merge Guest Wishlist
+  const guestWishlistCookie = cookies?.guest_wishlist || '';
+  const guestProductIds = guestWishlistCookie
+    ? guestWishlistCookie.split(',').map(Number).filter(Boolean)
+    : [];
+
+  if (guestProductIds.length > 0) {
+    await mergeGuestWishlistService({
+      customerId: customer.customer_id,
+      guestProductIds,
+    });
+  }
 
   const token = generateToken({
     customer_id: customer.customer_id,
