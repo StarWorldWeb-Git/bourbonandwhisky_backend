@@ -103,15 +103,18 @@ export const listProducts = async (query) => {
   const hasPriceFilter = Object.keys(pricefilter).length > 0;
 
 
-  let orderBy = { product_id: "desc" };
+  let orderBy = [
+    { quantity: "desc" }, 
+    { product_id: "desc" }
+  ];;
   if (sort === "price_asc") {
-    orderBy = { price: "asc" };
+    orderBy = [{ price: "asc" },{ quantity: "desc" }, { product_id: "desc" }];
   } else if (sort === "price_desc") {
-    orderBy = { price: "desc" };
+    orderBy = [{ price: "desc" },{ quantity: "desc" }, { product_id: "desc" }];
   } else if (sort === "name_asc") {
-    orderBy = { model: "asc" };
+    orderBy = [{ model: "asc" },{ quantity: "desc" }, { product_id: "desc" }];
   } else if (sort === "name_desc") {
-    orderBy = { model: "desc" };
+    orderBy = [{ model: "desc" },{ quantity: "desc" }, { product_id: "desc" }];
   }
 
   const where = {
@@ -387,7 +390,7 @@ export const getProductById = async (productId, languageId = 1) => {
       date_added: p?.date_added
     })),
     slug: seoUrl?.keyword ?? null,
-    img_slug:ManufactureSeoUrl?.keyword ?? null
+    img_slug: ManufactureSeoUrl?.keyword ?? null
   };
 };
 

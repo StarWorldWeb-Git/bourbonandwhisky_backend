@@ -24,7 +24,6 @@ export const getProductByIdController = async (req, res) => {
     if (!product) throw new HttpError(404, "Product not found");
     return res.json({ success: true, item: product });
   } else {
-    // Resolve slug from uvki_seo_url
     const seoUrl = await prisma.uvki_seo_url.findFirst({
       where: {
         keyword: identifier,
@@ -44,7 +43,7 @@ export const getProductByIdController = async (req, res) => {
       return res.json({ success: true, item: product });
     }
 
-    // If it's a category or manufacturer slug, return a filtered list
+
     if (seoUrl.query.startsWith('category_id=')) {
       const categoryId = parseInt(seoUrl.query.split('category_id=')[1]);
       const result = await listProducts({ ...req.query, category_id: categoryId });

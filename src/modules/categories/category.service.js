@@ -295,11 +295,15 @@ export const showGiftBasketsSerivce = async () => {
     where: {
       parent_id: 253
     },
-    orderBy: { category_id: "desc" },
+    orderBy: [
+      { sort_order: "asc" },
+      { category_id: "asc" }
+    ],
     select: {
       parent_id: true,
       image: true,
       category_id: true,
+      sort_order: true,
       uvki_category_description: {
         select: {
           name: true
@@ -308,24 +312,27 @@ export const showGiftBasketsSerivce = async () => {
     }
   })
 
-  const formateData = await Promise.all(giftsbasketData.map(async (g) => {
-    const seoUrl = await prisma.uvki_seo_url.findFirst({
-      where: {
-        query: `category_id=${g.category_id}`,
-        store_id: 0,
-        language_id: 1,
-      },
-      select: { keyword: true }
-    });
+  const formateData = await Promise.all(
+    giftsbasketData.map(async (g) => {
+      const seoUrl = await prisma.uvki_seo_url.findFirst({
+        where: {
+          query: `category_id=${g.category_id}`,
+          store_id: 0,
+          language_id: 1,
+        },
+        select: { keyword: true }
+      });
 
-    return {
-      name: g?.uvki_category_description?.[0]?.name,
-      image: g?.image,
-      category_id: g?.category_id,
-      parent_id: g?.parent_id,
-      slug: seoUrl?.keyword || null,
-    };
-  }));
+      return {
+        name: g?.uvki_category_description?.[0]?.name,
+        image: g?.image,
+        category_id: g?.category_id,
+        parent_id: g?.parent_id,
+        sort_order: g?.sort_order,
+        slug: seoUrl?.keyword || null,
+      };
+    })
+  );
 
   return formateData;
 }
@@ -371,7 +378,7 @@ export const showGiftByBrandService = async () => {
     return acc;
   }, {});
 
-const formattedData = await PARENT_IDS.reduce(async (accPromise, id, index) => {
+  const formattedData = await PARENT_IDS.reduce(async (accPromise, id, index) => {
     const acc = await accPromise;
     const key = CATEGORY_KEYS[index];
 
@@ -409,7 +416,7 @@ const formattedData = await PARENT_IDS.reduce(async (accPromise, id, index) => {
     acc[key] = {
       parent_id: id,
       parent_name: parentNames[id],
-      slug: parentSeoUrl?.keyword ?? null, 
+      slug: parentSeoUrl?.keyword ?? null,
       children
     };
 
