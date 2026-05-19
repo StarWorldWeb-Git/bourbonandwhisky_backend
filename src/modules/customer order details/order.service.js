@@ -80,7 +80,7 @@ export const orderhistoryservice = async (data) => {
 
 export const CustomerOrderDetailsByOrderIdServices = async (orderid) => {
 
-    const [order, productDetails] = await Promise.all([
+    const [order, productDetails, orderOptions] = await Promise.all([
         prisma.uvki_order.findFirst({
             where: { order_id: Number(orderid) },
             select: {
@@ -88,6 +88,7 @@ export const CustomerOrderDetailsByOrderIdServices = async (orderid) => {
                 payment_method: true,
                 shipping_method: true,
                 date_added: true,
+                comment: true,
 
                 payment_firstname: true,
                 payment_lastname: true,
@@ -129,11 +130,22 @@ export const CustomerOrderDetailsByOrderIdServices = async (orderid) => {
         prisma.uvki_order_product.findMany({
             where: { order_id: Number(orderid) },
             select: {
+                order_product_id: true,
                 name: true,
                 model: true,
                 quantity: true,
                 price: true,
                 total: true,
+            }
+        }),
+
+        prisma.uvki_order_option.findMany({
+            where: { order_id: Number(orderid) },
+            select: {
+                order_product_id: true,
+                name: true,
+                value: true,
+                type: true,
             }
         })
     ]);
@@ -153,12 +165,18 @@ export const CustomerOrderDetailsByOrderIdServices = async (orderid) => {
 
     const statusMap = Object.fromEntries(statuses.map(s => [s.order_status_id, s.name]));
 
+    const productsWithOpts = productDetails.map(product => ({
+        ...product,
+        options: orderOptions.filter(opt => opt.order_product_id === product.order_product_id)
+    }));
+
     return {
         order_details: {
             order_id: order.order_id,
             payment_method: order.payment_method,
             shipping_method: order.shipping_method,
             date_added: order.date_added,
+            comment: order.comment,
         },
         payment_address: {
             firstname: order.payment_firstname,
@@ -180,7 +198,7 @@ export const CustomerOrderDetailsByOrderIdServices = async (orderid) => {
             postcode: order.shipping_postcode,
             country: order.shipping_country,
         },
-        products: productDetails,
+        products: productsWithOpts,
         totals: order.uvki_order_total,
 
         

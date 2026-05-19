@@ -1086,12 +1086,17 @@ model uvki_option {
   option_id  Int    @id @default(autoincrement())
   type       String @db.VarChar(32)
   sort_order Int
+
+  uvki_option_description uvki_option_description[]
+  uvki_product_option     uvki_product_option[]
 }
 
 model uvki_option_description {
   option_id   Int
   language_id Int
   name        String @db.VarChar(128)
+
+  uvki_option uvki_option @relation(fields: [option_id], references: [option_id])
 
   @@id([option_id, language_id])
 }
@@ -1356,6 +1361,7 @@ model uvki_product {
   uvki_customer_wishlist   uvki_customer_wishlist[]
   uvki_cart                uvki_cart[]
   uvki_review              uvki_review[]
+  uvki_product_option      uvki_product_option[]
 
   @@index([product_id], map: "product_id")
   @@index([image], map: "square_image")
@@ -1443,6 +1449,9 @@ model uvki_product_option {
   option_id         Int
   value             String  @db.Text
   required          Boolean
+
+  uvki_option  uvki_option  @relation(fields: [option_id], references: [option_id])
+  uvki_product uvki_product @relation(fields: [product_id], references: [product_id])
 }
 
 model uvki_product_option_value {

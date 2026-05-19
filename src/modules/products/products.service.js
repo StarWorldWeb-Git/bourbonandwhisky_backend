@@ -307,6 +307,23 @@ export const getProductById = async (productId, languageId = 1) => {
         select: { image: true },
         orderBy: { sort_order: "asc" },
       },
+      uvki_product_option: {
+        select: {
+          product_option_id: true,
+          option_id: true,
+          value: true,
+          required: true,
+          uvki_option: {
+            select: {
+              type: true,
+              uvki_option_description: {
+                where: { language_id: languageId },
+                select: { name: true }
+              }
+            }
+          }
+        }
+      },
       uvki_manufacturer: {
         select: { image: true, manufacturer_id: true },
       },
@@ -381,6 +398,7 @@ export const getProductById = async (productId, languageId = 1) => {
     meta_description: desc?.meta_description ?? null,
     meta_keyword: desc?.meta_keyword ?? null,
     tag: desc?.tag ?? null,
+    uvki_product_option: product.uvki_product_option,
     brandImg: product.uvki_manufacturer?.image ?? null,
     manufacturer_id: product.uvki_manufacturer?.manufacturer_id ?? null,
     product_review: product?.uvki_review.map((p) => ({

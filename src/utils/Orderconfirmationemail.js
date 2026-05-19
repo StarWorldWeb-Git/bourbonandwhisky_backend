@@ -29,6 +29,7 @@ export const generateOrderConfirmationEmail = ({
   payment_zone,
   payment_country,
   totals = [],
+  comment = "",
 }) => {
   const subTotal   = totals.find((t) => t.code === "sub_total")?.value ?? 0;
   const shipping   = totals.find((t) => t.code === "shipping")?.value  ?? 0;
@@ -41,11 +42,20 @@ export const generateOrderConfirmationEmail = ({
     year: "numeric", month: "long", day: "numeric",
   });
 
-  const productRows = products.map((p) => `
+  const productRows = products.map((p) => {
+    const optionsHtml = (p.option || p.options || []).map(opt => `
+      <div style="margin-top:4px; padding:4px 8px; background:#fdfbf7; border-left:2px solid #c99000; font-size:11px; color:#7a6a50;">
+        <strong style="text-transform:uppercase; font-size:10px;">${opt.name}:</strong> 
+        <em style="color:#4a3f2f;">"${opt.value}"</em>
+      </div>
+    `).join("");
+
+    return `
     <tr>
       <td style="padding:14px 16px; border-bottom:1px solid #e8e0d0; font-family:'Georgia',serif; font-size:13px; color:#4a3f2f; line-height:1.5; background:#ffffff;">
         <span style="display:block; font-weight:700; color:#2c1f0e; font-size:14px;">${p.name}</span>
         <span style="color:#9a8060; font-size:11px; letter-spacing:0.5px;">Model: ${p.model}</span>
+        ${optionsHtml}
       </td>
       <td style="padding:14px 16px; border-bottom:1px solid #e8e0d0; text-align:center; font-family:'Georgia',serif; font-size:13px; color:#4a3f2f; background:#ffffff;">
         ${p.quantity}
@@ -57,7 +67,7 @@ export const generateOrderConfirmationEmail = ({
         ${fmt(p.total ?? p.price * p.quantity)}
       </td>
     </tr>
-  `).join("");
+  `}).join("");
 
   const tipRow = tip > 0 ? `
     <tr bgcolor="#fdfbf7">
@@ -328,6 +338,31 @@ export const generateOrderConfirmationEmail = ({
               </table>
             </td>
           </tr>
+
+          ${comment ? `
+          <!-- ══ ORDER COMMENT ══ -->
+          <tr>
+            <td bgcolor="#ffffff"
+              style="background:#ffffff !important;
+                     border-left:1px solid #c99000;
+                     border-right:1px solid #c99000;
+                     padding:0 24px 28px;">
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="border:1px solid #ddd5c0; border-radius:8px; overflow:hidden;">
+                <tr>
+                  <td bgcolor="#2c1f0e" style="background:#2c1f0e !important; padding:12px 16px; border-bottom:1px solid #c99000;">
+                    <span style="font-size:9px; letter-spacing:2.5px; color:#c99000; text-transform:uppercase; font-weight:700;">💬 Order Message / Gift Note</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td bgcolor="#fffdf7" style="padding:18px; background:#fffdf7 !important; font-family:'Georgia',serif; font-size:13px; color:#4a3f2f; line-height:1.6; font-style:italic;">
+                    "${comment}"
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          ` : ""}
 
           <!-- ══ FOOTER ══ -->
           <tr>

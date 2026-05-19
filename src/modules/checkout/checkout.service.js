@@ -315,6 +315,7 @@ export const placeOrderService = async (orderData) => {
             payment_lastname, payment_address_1,
             payment_city, payment_zone,
             payment_country,
+            comment,
         }),
     });
 
