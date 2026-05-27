@@ -228,7 +228,7 @@ export const getHomepageDataService = async () => {
     prisma.uvki_journal3_module.findFirst({
       where: {
         module_type: "info_blocks",
-        module_name: "Bourbon & Whisky Blocks"
+        module_id: 286
       },
       select: { module_data: true }
     }),

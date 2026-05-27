@@ -25,11 +25,14 @@ export const createApp = () => {
   const app = express();
 
   app.use(
-    cors({
-      origin: "http://localhost:3000",
-      credentials: true
-    })
-  );
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "https://www.bourbonandwhisky.com"
+    ],
+    credentials: true,
+  })
+);
 
   app.use(cookieParser())
   app.use(express.json());

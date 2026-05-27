@@ -607,7 +607,7 @@ export const BourbonDataService = async () => {
     prisma.uvki_journal3_module.findFirst({
       where: {
         module_type: "products",
-        module_name: "New in Bourbon - Home Page"
+        module_id: 169
       },
       select: { module_data: true }
     }),
@@ -679,7 +679,7 @@ export const getSliderDataService = async () => {
   const sliderModule = await prisma.uvki_journal3_module.findFirst({
     where: {
       module_type: "master_slider",
-      module_name: "Slider Top Home"
+      module_id: 26
     },
     select: { module_data: true }
   });
@@ -732,7 +732,7 @@ export const getBannersDataService = async () => {
   const bannerModule = await prisma.uvki_journal3_module.findFirst({
     where: {
       module_type: "banners",
-      module_name: "Banners Top Home"
+      module_id: 259
     },
     select: { module_data: true }
   });

@@ -16,7 +16,7 @@ const cartRouter = Router();
 
 cartRouter.get('/', optionalAuth, asyncHandler(getCart));
 cartRouter.post('/add', optionalAuth, asyncHandler(addToCart));
-cartRouter.put('/update', authMiddleware, asyncHandler(updateCart));
+cartRouter.put('/update', optionalAuth, asyncHandler(updateCart));
 cartRouter.delete('/delete/:cart_id', optionalAuth, asyncHandler(removeFromCart));
 cartRouter.delete('/clear', authMiddleware, asyncHandler(clearCart));
 
