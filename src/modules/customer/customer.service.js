@@ -229,6 +229,14 @@ export const registerCustomer = async (data, ip) => {
     }
   });
 
+    await transporter.sendMail({
+    from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM}>`,
+    to: email,
+    subject: 'Bourbon & Whisky 🍾',
+    html: ``
+  });
+
+
   const token = generateToken({
     customer_id: newCustomer.customer_id,
     email: newCustomer.email,

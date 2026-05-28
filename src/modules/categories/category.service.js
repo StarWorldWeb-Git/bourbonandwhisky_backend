@@ -8,22 +8,58 @@ const MAX_LIMIT = 100;
 
 export const listingCategoriesServices = async (query) => {
   const page = parsePositiveInt(query.page, 1);
-  const parentId = parseInt(query.parent_id);
-
   const requestedLimit = parsePositiveInt(query.limit, DEFAULT_LIMIT);
   const limit = Math.min(requestedLimit, MAX_LIMIT);
   const offset = (page - 1) * limit;
 
-  const whereCondition = {
-    ...(parentId && { parent_id: parentId }),
-  };
+  let categoryId = parsePositiveInt(query.category_id, 0);
+  let manufacturerId = parsePositiveInt(query.manufacturer_id, 0);
+  let productId = parsePositiveInt(query.product_id, 0);
+
+
+
+
+  if (query.category_id && categoryId === 0) {
+    const seoUrl = await prisma.uvki_seo_url.findFirst({
+      where: {
+        keyword: query.category_id,
+        store_id: 0,
+
+      }
+    });
+    if (seoUrl?.query?.startsWith('category_id=')) {
+      categoryId = parseInt(seoUrl.query.split('category_id=')[1]);
+    }
+  }
+
+
+  if (query.slug) {
+    const seoUrl = await prisma.uvki_seo_url.findFirst({
+      where: {
+        keyword: query.slug,
+        store_id: 0,
+
+      }
+    });
+    if (seoUrl) {
+      if (seoUrl.query.startsWith('category_id=')) {
+        categoryId = parseInt(seoUrl.query.split('category_id=')[1]);
+      } else if (seoUrl.query.startsWith('manufacturer_id=')) {
+        manufacturerId = parseInt(seoUrl.query.split('manufacturer_id=')[1]);
+      } else if (seoUrl.query.startsWith('product_id=')) {
+        productId = parseInt(seoUrl.query.split('product_id=')[1]);
+      }
+    }
+  }
+  const parsedCategoryId = categoryId ? parseInt(categoryId) : undefined;
+  const whereCondition = { parent_id: parsedCategoryId ?? 0, status: true }
   const [item, total] = await prisma.$transaction([
     prisma.uvki_category.findMany({
       skip: offset,
       take: limit,
-      orderBy: {
-        category_id: "desc",
-      },
+      orderBy: [
+        { sort_order: "asc" },
+      ],
       where: whereCondition,
       select: {
         parent_id: true,
@@ -42,6 +78,8 @@ export const listingCategoriesServices = async (query) => {
     }),
   ]);
 
+  console.log(item)
+
   const items = await Promise.all(item?.map(async (c) => {
     const seoUrl = await prisma.uvki_seo_url.findFirst({
       where: {
@@ -49,7 +87,7 @@ export const listingCategoriesServices = async (query) => {
         store_id: 0,
         language_id: 1,
       },
-      select: { keyword: true }
+      select: { keyword: true },
     });
 
     return {

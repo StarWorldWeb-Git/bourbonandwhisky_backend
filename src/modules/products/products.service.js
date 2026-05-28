@@ -1,5 +1,6 @@
 import { prisma } from "../../../lib/prisma.js";
 import { parsePositiveInt } from "../../utils/parsePostiveInt.js";
+import { listingCategoriesServices } from "../categories/category.service.js";
 
 const DEFAULT_LIMIT = 12;
 const MAX_LIMIT = 100;
@@ -28,6 +29,9 @@ export const listProducts = async (query) => {
   let manufacturerId = parsePositiveInt(query.manufacturer_id, 0);
   let productId = parsePositiveInt(query.product_id, 0);
 
+
+
+
   if (query.category_id && categoryId === 0) {
     const seoUrl = await prisma.uvki_seo_url.findFirst({
       where: {
@@ -40,6 +44,7 @@ export const listProducts = async (query) => {
       categoryId = parseInt(seoUrl.query.split('category_id=')[1]);
     }
   }
+
 
 
   if (query.manufacturer_id && manufacturerId === 0) {
@@ -87,6 +92,7 @@ export const listProducts = async (query) => {
     }
   }
 
+
   const minPrice = (query.min_price !== undefined && query.min_price !== "") ? parseFloat(query.min_price) : NaN;
   const maxPrice = (query.max_price !== undefined && query.max_price !== "") ? parseFloat(query.max_price) : NaN;
   const exactPrice = (query.price !== undefined && query.price !== "") ? parseFloat(query.price) : NaN;
@@ -104,17 +110,17 @@ export const listProducts = async (query) => {
 
 
   let orderBy = [
-    { quantity: "desc" }, 
+    { quantity: "desc" },
     { product_id: "desc" }
   ];;
   if (sort === "price_asc") {
-    orderBy = [{ price: "asc" },{ quantity: "desc" }, { product_id: "desc" }];
+    orderBy = [{ price: "asc" }, { quantity: "desc" }, { product_id: "desc" }];
   } else if (sort === "price_desc") {
-    orderBy = [{ price: "desc" },{ quantity: "desc" }, { product_id: "desc" }];
+    orderBy = [{ price: "desc" }, { quantity: "desc" }, { product_id: "desc" }];
   } else if (sort === "name_asc") {
-    orderBy = [{ model: "asc" },{ quantity: "desc" }, { product_id: "desc" }];
+    orderBy = [{ model: "asc" }, { quantity: "desc" }, { product_id: "desc" }];
   } else if (sort === "name_desc") {
-    orderBy = [{ model: "desc" },{ quantity: "desc" }, { product_id: "desc" }];
+    orderBy = [{ model: "desc" }, { quantity: "desc" }, { product_id: "desc" }];
   }
 
   const where = {

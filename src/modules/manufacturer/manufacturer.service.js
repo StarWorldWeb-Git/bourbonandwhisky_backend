@@ -18,7 +18,7 @@ export const lisdtingManufacturersService = async (query) => {
             skip: offset,
             take: limit,
             orderBy: {
-                manufacturer_id: "asc"
+                sort_order: "asc"
             },
             select: {
                 name: true,

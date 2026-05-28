@@ -20,7 +20,7 @@ export const orderhistoryservice = async (data) => {
             where,
             skip,
             take: limit,
-            orderBy: { date_added: 'desc' }, 
+            orderBy: { date_added: 'desc' },
             select: {
                 order_id: true,
                 firstname: true,
@@ -71,8 +71,8 @@ export const orderhistoryservice = async (data) => {
     return {
         page,
         limit,
-        total,                          
-        total_pages: Math.ceil(total / limit), 
+        total,
+        total_pages: Math.ceil(total / limit),
         data: COH
     };
 };
@@ -115,7 +115,7 @@ export const CustomerOrderDetailsByOrderIdServices = async (orderid) => {
                     orderBy: { sort_order: 'asc' }
                 },
 
-                
+
                 uvki_order_history: {
                     select: {
                         order_status_id: true,
@@ -131,6 +131,7 @@ export const CustomerOrderDetailsByOrderIdServices = async (orderid) => {
             where: { order_id: Number(orderid) },
             select: {
                 order_product_id: true,
+                product_id: true,
                 name: true,
                 model: true,
                 quantity: true,
@@ -152,24 +153,40 @@ export const CustomerOrderDetailsByOrderIdServices = async (orderid) => {
 
     if (!order) throw new Error('Order not found');
 
-    
+
     const statusIds = [...new Set(
         order.uvki_order_history.map(h => h.order_status_id)
     )];
 
-   
+
     const statuses = await prisma.uvki_order_status.findMany({
         where: { order_status_id: { in: statusIds }, language_id: 1 },
         select: { order_status_id: true, name: true },
     });
 
     const statusMap = Object.fromEntries(statuses.map(s => [s.order_status_id, s.name]));
+    const seoUrls = await prisma.uvki_seo_url.findMany({
+        where: {
+            query: {
+                in: productDetails.map((p) => `product_id=${p?.product_id}`)
+            }
+        }
+    })
 
-    const productsWithOpts = productDetails.map(product => ({
-        ...product,
-        options: orderOptions.filter(opt => opt.order_product_id === product.order_product_id)
-    }));
 
+    const productsWithOpts = productDetails.map(product => {
+        const seo = seoUrls.find(
+            (s) => s.query === `product_id=${product.product_id}`
+        );
+
+        return {
+            ...product,
+            slug: seo?.keyword || null,
+            options: orderOptions.filter(
+                (opt) => opt.order_product_id === product.order_product_id
+            ),
+        };
+    });
     return {
         order_details: {
             order_id: order.order_id,
@@ -201,7 +218,7 @@ export const CustomerOrderDetailsByOrderIdServices = async (orderid) => {
         products: productsWithOpts,
         totals: order.uvki_order_total,
 
-        
+
         order_history: order.uvki_order_history.map(h => ({
             status: statusMap[h.order_status_id] || 'Unknown',
             comment: h.comment,
