@@ -16,53 +16,82 @@ export const listingCategoriesServices = async (query) => {
   let manufacturerId = parsePositiveInt(query.manufacturer_id, 0);
   let productId = parsePositiveInt(query.product_id, 0);
 
-
-
-
   if (query.category_id && categoryId === 0) {
     const seoUrl = await prisma.uvki_seo_url.findFirst({
       where: {
         keyword: query.category_id,
         store_id: 0,
-
-      }
+      },
     });
-    if (seoUrl?.query?.startsWith('category_id=')) {
-      categoryId = parseInt(seoUrl.query.split('category_id=')[1]);
+
+    if (seoUrl?.query?.startsWith("category_id=")) {
+      categoryId = parseInt(
+        seoUrl.query.split("category_id=")[1]
+      );
     }
   }
-
 
   if (query.slug) {
     const seoUrl = await prisma.uvki_seo_url.findFirst({
       where: {
         keyword: query.slug,
         store_id: 0,
-
-      }
+      },
     });
+
     if (seoUrl) {
-      if (seoUrl.query.startsWith('category_id=')) {
-        categoryId = parseInt(seoUrl.query.split('category_id=')[1]);
-      } else if (seoUrl.query.startsWith('manufacturer_id=')) {
-        manufacturerId = parseInt(seoUrl.query.split('manufacturer_id=')[1]);
-      } else if (seoUrl.query.startsWith('product_id=')) {
-        productId = parseInt(seoUrl.query.split('product_id=')[1]);
+      if (seoUrl.query.startsWith("category_id=")) {
+        categoryId = parseInt(
+          seoUrl.query.split("category_id=")[1]
+        );
+      } else if (seoUrl.query.startsWith("manufacturer_id=")) {
+        manufacturerId = parseInt(
+          seoUrl.query.split("manufacturer_id=")[1]
+        );
+      } else if (seoUrl.query.startsWith("product_id=")) {
+        productId = parseInt(
+          seoUrl.query.split("product_id=")[1]
+        );
       }
     }
   }
-  const parsedCategoryId = categoryId ? parseInt(categoryId) : undefined;
-  const whereCondition = { parent_id: parsedCategoryId ?? 0, status: true }
+
+  const parsedCategoryId = categoryId
+    ? parseInt(categoryId)
+    : undefined;
+
+  let whereCondition = {
+    parent_id: parsedCategoryId ?? 0,
+    status: true,
+  };
+
+  // manufacturer based related categories
+  if (manufacturerId) {
+    whereCondition = {
+      status: true,
+      
+      uvki_product_to_category: {
+        some: {
+          uvki_product: {
+            manufacturer_id: manufacturerId,
+            status: true,
+          },
+        },
+      },
+    };
+  }
+
   const [item, total] = await prisma.$transaction([
     prisma.uvki_category.findMany({
       skip: offset,
       take: limit,
-      orderBy: [
-        { sort_order: "asc" },
-      ],
+      distinct: ["category_id"],
+      orderBy: [{ sort_order: "asc" }],
       where: whereCondition,
       select: {
+        category_id: true,
         parent_id: true,
+
         uvki_category_description: {
           select: {
             name: true,
@@ -78,26 +107,30 @@ export const listingCategoriesServices = async (query) => {
     }),
   ]);
 
-  console.log(item)
+  const items = await Promise.all(
+    item.map(async (c) => {
+      const seoUrl = await prisma.uvki_seo_url.findFirst({
+        where: {
+          query: `category_id=${c.category_id}`,
+          store_id: 0,
+          language_id: 1,
+        },
+        select: {
+          keyword: true,
+        },
+      });
 
-  const items = await Promise.all(item?.map(async (c) => {
-    const seoUrl = await prisma.uvki_seo_url.findFirst({
-      where: {
-        query: `category_id=${c.uvki_category_description?.[0]?.category_id}`,
-        store_id: 0,
-        language_id: 1,
-      },
-      select: { keyword: true },
-    });
-
-    return {
-      parent_id: c?.parent_id,
-      name: c?.uvki_category_description?.[0]?.name,
-      category_id: c?.uvki_category_description?.[0]?.category_id,
-      language_id: c?.uvki_category_description?.[0]?.language_id,
-      slug: seoUrl?.keyword || null,
-    };
-  }));
+      return {
+        parent_id: c.parent_id,
+        name: c?.uvki_category_description?.[0]?.name,
+        category_id:
+          c?.uvki_category_description?.[0]?.category_id,
+        language_id:
+          c?.uvki_category_description?.[0]?.language_id,
+        slug: seoUrl?.keyword || null,
+      };
+    })
+  );
 
   return {
     page,

@@ -23,7 +23,7 @@ export const lisdtingManufacturersService = async (query) => {
             select: {
                 name: true,
                 manufacturer_id: true,
-                image:true
+                image: true
             }
         }),
         prisma.uvki_category_description.count(),
@@ -53,6 +53,115 @@ export const lisdtingManufacturersService = async (query) => {
     }
 
 }
+export const lisdtingManufacturersServiceForFilter = async (query) => {
+
+    let manufacturerId = 0;
+    let categoryId = 0;
+
+    // slug handle
+    if (query.slug) {
+        const seoUrl = await prisma.uvki_seo_url.findFirst({
+            where: {
+                keyword: query.slug,
+                store_id: 0,
+            }
+        });
+
+        if (seoUrl) {
+            if (seoUrl.query.startsWith("manufacturer_id=")) {
+                manufacturerId = parseInt(
+                    seoUrl.query.split("manufacturer_id=")[1]
+                );
+            }
+
+            if (seoUrl.query.startsWith("category_id=")) {
+                categoryId = parseInt(
+                    seoUrl.query.split("category_id=")[1]
+                );
+            }
+        }
+    }
+
+    // direct category_id support
+    if (query.category_id) {
+        categoryId = parseInt(query.category_id);
+    }
+
+    let whereCondition = {};
+
+    // manufacturer specific
+    if (manufacturerId) {
+        whereCondition = {
+            manufacturer_id: manufacturerId
+        };
+    }
+
+    // category specific manufacturers
+    if (categoryId) {
+
+        // category ke products nikalo
+        const productToCategory =
+            await prisma.uvki_product_to_category.findMany({
+                where: {
+                    category_id: categoryId
+                },
+                select: {
+                    product_id: true
+                }
+            });
+
+        const productIds = productToCategory.map(
+            (p) => p.product_id
+        );
+
+        whereCondition = {
+            uvki_product: {
+                some: {
+                    product_id: {
+                        in: productIds
+                    }
+                }
+            }
+        };
+    }
+
+    const items = await prisma.uvki_manufacturer.findMany({
+        where: whereCondition,
+
+        orderBy: [{sort_order: "asc"},{name:'asc'}],
+
+        select: {
+            name: true,
+            manufacturer_id: true,
+            image: true
+        }
+    });
+
+    const itemsWithSlugs = await Promise.all(
+        items.map(async (m) => {
+            const seoUrl = await prisma.uvki_seo_url.findFirst({
+                where: {
+                    query: `manufacturer_id=${m.manufacturer_id}`,
+                    store_id: 0,
+                    language_id: 1,
+                },
+                
+                select: {
+                    keyword: true
+                }
+            });
+
+            return {
+                ...m,
+                slug: seoUrl?.keyword || null
+            };
+        })
+    );
+
+    return {
+        items: itemsWithSlugs
+    };
+};
 
 
 export const listingAllManufacturersService = async (query) => {
@@ -99,8 +208,8 @@ export const listingAllManufacturersService = async (query) => {
         totalPages: Math.ceil(total / limit),
         items: itemsWithSlugs
     }
-}   
-   
+}
+
 export const showProductByManufacturerIdService = async (manufacturer_id, query = {}) => {
     const DEFAULT_LIMIT = 12;
     const MAX_LIMIT = 100;
@@ -177,76 +286,75 @@ export const showProductByManufacturerIdService = async (manufacturer_id, query 
         totalPages: Math.ceil(total / limit),
     };
 };
-   export const getShopByBrandsService = async (moduleId, query) => {
-  const languageId = parsePositiveInt(query?.language_id, 1);
+export const getShopByBrandsService = async (moduleId, query) => {
+    const languageId = parsePositiveInt(query?.language_id, 1);
 
-  // Fetch module data from DB
-  const module = await prisma.uvki_journal3_module.findFirst({
-    where: { module_id: moduleId },
-    select: { module_data: true }
-  });
+    // Fetch module data from DB
+    const module = await prisma.uvki_journal3_module.findFirst({
+        where: { module_id: moduleId },
+        select: { module_data: true }
+    });
 
-  if (!module) throw new Error("Module not found");
+    if (!module) throw new Error("Module not found");
 
-  const moduleData = JSON.parse(module.module_data);
-  const items = moduleData?.items ?? [];
+    const moduleData = JSON.parse(module.module_data);
+    const items = moduleData?.items ?? [];
 
-  // Extract manufacturer IDs
-  const manufacturerIds = items
-    .filter(item => item.type === "manufacturer" && item.status?.status === "true")
-    .map(item => parseInt(item.manufacturer));
+    // Extract manufacturer IDs
+    const manufacturerIds = items
+        .filter(item => item.type === "manufacturer" && item.status?.status === "true")
+        .map(item => parseInt(item.manufacturer));
 
-  if (manufacturerIds.length === 0) return [];
+    if (manufacturerIds.length === 0) return [];
 
-  // Fetch manufacturers with images in parallel
-  const [manufacturers, seoUrls] = await Promise.all([
-    prisma.uvki_manufacturer.findMany({
-      where: { manufacturer_id: { in: manufacturerIds } },
-      select: {
-        manufacturer_id: true,
-        name: true,
-        image: true,
-      }
-    }),
-    prisma.uvki_seo_url.findMany({
-      where: {
-        query: { in: manufacturerIds.map(id => `manufacturer_id=${id}`) },
-        store_id: 0,
-        language_id: languageId,
-      },
-      select: { query: true, keyword: true }
-    })
-  ]);
+    // Fetch manufacturers with images in parallel
+    const [manufacturers, seoUrls] = await Promise.all([
+        prisma.uvki_manufacturer.findMany({
+            where: { manufacturer_id: { in: manufacturerIds } },
+            select: {
+                manufacturer_id: true,
+                name: true,
+                image: true,
+            }
+        }),
+        prisma.uvki_seo_url.findMany({
+            where: {
+                query: { in: manufacturerIds.map(id => `manufacturer_id=${id}`) },
+                store_id: 0,
+                language_id: languageId,
+            },
+            select: { query: true, keyword: true }
+        })
+    ]);
 
-  // Build slug map
-  const slugMap = {};
-  seoUrls.forEach(s => {
-    const id = s.query.split('manufacturer_id=')[1];
-    slugMap[id] = s.keyword;
-  });
+    // Build slug map
+    const slugMap = {};
+    seoUrls.forEach(s => {
+        const id = s.query.split('manufacturer_id=')[1];
+        slugMap[id] = s.keyword;
+    });
 
-  // Preserve order from module items
-  const manufacturerMap = {};
-  manufacturers.forEach(m => {
-    manufacturerMap[m.manufacturer_id] = m;
-  });
+    // Preserve order from module items
+    const manufacturerMap = {};
+    manufacturers.forEach(m => {
+        manufacturerMap[m.manufacturer_id] = m;
+    });
 
-  const result = items
-    .filter(item => item.type === "manufacturer" && item.status?.status === "true")
-    .map(item => {
-      const id = parseInt(item.manufacturer);
-      const m = manufacturerMap[id];
-      if (!m) return null;
-      return {
-        manufacturer_id: m.manufacturer_id,
-        name: m.name,
-        image: m.image ?? null,
-        slug: slugMap[id] ?? null,
-        limit: parseInt(item.limit) || 4,
-      };
-    })
-    .filter(Boolean);
+    const result = items
+        .filter(item => item.type === "manufacturer" && item.status?.status === "true")
+        .map(item => {
+            const id = parseInt(item.manufacturer);
+            const m = manufacturerMap[id];
+            if (!m) return null;
+            return {
+                manufacturer_id: m.manufacturer_id,
+                name: m.name,
+                image: m.image ?? null,
+                slug: slugMap[id] ?? null,
+                limit: parseInt(item.limit) || 4,
+            };
+        })
+        .filter(Boolean);
 
-  return result;
+    return result;
 };
-  
