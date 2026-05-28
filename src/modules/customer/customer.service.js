@@ -4,6 +4,7 @@ import { generateToken } from '../../utils/generateToken.js';
 import { transporter } from '../../config/nodemiller.js';
 import { mergeGuestWishlistService } from '../wishlish/wishlist.service.js';
 import { mergeGuestCartService } from '../cart/cart.service.js';
+import { generateRegistrationEmail } from '../../utils/generateRegistrationEmail.js';
 
 
 
@@ -122,7 +123,7 @@ export const socialLoginCustomer = async (data, ip, cookies = {}) => {
 
 export const loginCustomer = async (data, ip, cookies = {}) => {
   const { email, password } = data;
- 
+
   const customer = await prisma.uvki_customer.findFirst({
     where: { email: email.toLowerCase().trim() },
     select: {
@@ -137,18 +138,18 @@ export const loginCustomer = async (data, ip, cookies = {}) => {
       customer_group_id: true,
     },
   });
- 
+
   if (!customer) throw new Error('Invalid email or password');
   if (!customer.status) throw new Error('Your account is disabled. Contact support.');
- 
+
   const hashedInput = hashPassword(password, customer.salt);
   if (hashedInput !== customer.password) throw new Error('Invalid email or password');
- 
+
   await prisma.uvki_customer_ip.create({
     data: { customer_id: customer.customer_id, ip: ip || '0.0.0.0', date_added: new Date() },
   });
- 
-  
+
+
   const guestSessionId = cookies?.guest_session || '';
   if (guestSessionId) {
     await mergeGuestCartService({
@@ -156,26 +157,26 @@ export const loginCustomer = async (data, ip, cookies = {}) => {
       customerId: customer.customer_id,
     });
   }
- 
-  
+
+
   const guestWishlistCookie = cookies?.guest_wishlist || '';
   const guestProductIds = guestWishlistCookie
     ? guestWishlistCookie.split(',').map(Number).filter(Boolean)
     : [];
- 
+
   if (guestProductIds.length > 0) {
     await mergeGuestWishlistService({
       customerId: customer.customer_id,
       guestProductIds,
     });
   }
- 
+
   const token = generateToken({
     customer_id: customer.customer_id,
     email: customer.email,
     customer_group_id: customer.customer_group_id,
   });
- 
+
   return {
     token,
     customer: {
@@ -229,11 +230,15 @@ export const registerCustomer = async (data, ip) => {
     }
   });
 
-    await transporter.sendMail({
+  await transporter.sendMail({
     from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM}>`,
     to: email,
-    subject: 'Bourbon & Whisky 🍾',
-    html: ``
+    subject: 'Welcome to Bourbon & Whisky 🥃',
+    html: generateRegistrationEmail({
+      firstname,
+      lastname,
+      email,
+    })
   });
 
 
